@@ -490,8 +490,7 @@ bool llvm::isAssumeLikeIntrinsic(const Instruction *I) {
   return false;
 }
 
-bool llvm::isValidAssumeForContext(const Instruction *Inv,
-                                   const Instruction *CxtI,
+bool llvm::isValidAssumeForContext(const Instruction *Inv, const Value *Cxt,
                                    const DominatorTree *DT,
                                    bool AllowEphemerals) {
   // There are two restrictions on the use of an assume:
@@ -502,18 +501,7 @@ bool llvm::isValidAssumeForContext(const Instruction *Inv,
   //     feeding the assume is trivially true, thus causing the removal of
   //     the assume).
 
-  if (Inv->getParent() == CxtI->getParent()) {
-    // If Inv and CtxI are in the same block, check if the assume (Inv) is first
-    // in the BB.
-    if (Inv->comesBefore(CxtI))
-      return true;
-
-    // Don't let an assume affect itself - this would cause the problems
-    // `isEphemeralValueOf` is trying to prevent, and it would also make
-    // the loop below go out of bounds.
-    if (!AllowEphemerals && Inv == CxtI)
-      return false;
-
+  auto IsValidAssumeForContext = [&](const Instruction *CxtI) -> bool {
     // The context comes first, but they're both in the same block.
     // Make sure there is nothing in between that might interrupt
     // the control flow, not even CxtI itself.
@@ -525,15 +513,39 @@ bool llvm::isValidAssumeForContext(const Instruction *Inv,
       return false;
 
     return AllowEphemerals || !isEphemeralValueOf(Inv, CxtI);
-  }
+  };
 
-  // Inv and CxtI are in different blocks.
-  if (DT) {
-    if (DT->dominates(Inv, CxtI))
+  if (const auto *CxtI = dyn_cast<Instruction>(Cxt)) {
+    if (Inv->getParent() == CxtI->getParent()) {
+      // If Inv and CtxI are in the same block, check if the assume (Inv) is
+      // first in the BB.
+      if (Inv->comesBefore(CxtI))
+        return true;
+
+      // Don't let an assume affect itself - this would cause the problems
+      // `isEphemeralValueOf` is trying to prevent, and it would also make
+      // the loop below go out of bounds.
+      if (!AllowEphemerals && Inv == CxtI)
+        return false;
+
+      return IsValidAssumeForContext(CxtI);
+    } else if (const auto *Invoke = dyn_cast<InvokeInst>(CxtI)) {
+      if (Inv->getParent() == Invoke->getNormalDest())
+        return IsValidAssumeForContext(&Invoke->getNormalDest()->front());
+    }
+
+    // Inv and CxtI are in different blocks.
+    if (DT) {
+      if (DT->dominates(Inv, CxtI))
+        return true;
+    } else if (Inv->getParent() == CxtI->getParent()->getSinglePredecessor()) {
+      // We don't have a DT, but this trivially dominates.
       return true;
-  } else if (Inv->getParent() == CxtI->getParent()->getSinglePredecessor()) {
-    // We don't have a DT, but this trivially dominates.
-    return true;
+    }
+  } else if (const auto *Arg = dyn_cast<Argument>(Cxt)) {
+    const auto &EntryBlock = Arg->getParent()->getEntryBlock();
+    if (Inv->getParent() == &EntryBlock)
+      return IsValidAssumeForContext(&EntryBlock.front());
   }
 
   return false;

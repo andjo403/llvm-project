@@ -285,9 +285,6 @@ define i1 @nonnull1(ptr %a) {
 
 define i1 @nonnull2(ptr %a) {
 ; CHECK-LABEL: @nonnull2(
-; CHECK-NEXT:    [[LOAD:%.*]] = load i32, ptr [[A:%.*]], align 4
-; CHECK-NEXT:    [[CMP:%.*]] = icmp ne i32 [[LOAD]], 0
-; CHECK-NEXT:    tail call void @llvm.assume(i1 [[CMP]])
 ; CHECK-NEXT:    ret i1 false
 ;
   %load = load i32, ptr %a

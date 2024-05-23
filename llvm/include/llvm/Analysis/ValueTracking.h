@@ -879,7 +879,7 @@ bool isAssumeLikeIntrinsic(const Instruction *I);
 /// to optimize away its argument. If the caller can ensure that this won't
 /// happen, it can call with AllowEphemerals set to true to get more valid
 /// assumptions.
-bool isValidAssumeForContext(const Instruction *I, const Instruction *CxtI,
+bool isValidAssumeForContext(const Instruction *I, const Value *CxtI,
                              const DominatorTree *DT = nullptr,
                              bool AllowEphemerals = false);
 

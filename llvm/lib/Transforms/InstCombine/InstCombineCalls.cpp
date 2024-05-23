@@ -48,6 +48,7 @@
 #include "llvm/IR/IntrinsicsARM.h"
 #include "llvm/IR/IntrinsicsHexagon.h"
 #include "llvm/IR/LLVMContext.h"
+#include "llvm/IR/MDBuilder.h"
 #include "llvm/IR/Metadata.h"
 #include "llvm/IR/PatternMatch.h"
 #include "llvm/IR/Statepoint.h"
@@ -3074,6 +3075,34 @@ Instruction *InstCombinerImpl::visitCallInst(CallInst &CI) {
 
       // TODO: apply nonnull return attributes to calls and invokes
       // TODO: apply range metadata for range check patterns?
+    }
+    const APInt *C;
+    if (match(IIOperand, m_ICmp(Pred, m_Value(A), m_APInt(C))) &&
+        (isa<LoadInst>(A) || isa<CallInst>(A) || isa<InvokeInst>(A)) &&
+        LHS->getType()->isIntegerTy() && isValidAssumeForContext(II, A)) {
+      ConstantRange Range = ConstantRange::makeExactICmpRegion(Pred, *C);
+      if (auto *Arg = dyn_cast<Argument>(LHS)) {
+        if (auto OldRange = Arg->getRange())
+          Range = Range.intersectWith(*OldRange);
+      } else {
+        if (MDNode *MD = II->getMetadata(LLVMContext::MD_range))
+          Range = Range.intersectWith(getConstantRangeFromMetadata(*MD));
+        if (auto *CB = dyn_cast<CallBase>(LHS)) {
+          if (auto OldRange = CB->getRange())
+            Range = Range.intersectWith(*OldRange);
+          CB->addRangeRetAttr(Range);
+          CB->addRetAttr(Attribute::NoUndef);
+        } else {
+          llvm::MDBuilder MdBuilder(II->getContext());
+          llvm::MDNode *MDRange =
+              MdBuilder.createRange(Range.getLower(), Range.getUpper());
+          LHS->setMetadata(llvm::LLVMContext::MD_range, MDRange);
+
+          MDNode *MD = MDNode::get(II->getContext(), std::nullopt);
+          LHS->setMetadata(LLVMContext::MD_noundef, MD);
+        }
+      }
+      return RemoveConditionFromAssume(II);
     }
 
     // Separate storage assumptions apply to the underlying allocations, not any
