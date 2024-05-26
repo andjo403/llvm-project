@@ -262,15 +262,13 @@ declare i32 @external()
 
 define i32 @rem4() {
 ; CHECK-LABEL: @rem4(
-; CHECK-NEXT:    [[CALL:%.*]] = call i32 @external(), !range [[RNG0:![0-9]+]]
+; CHECK-NEXT:    [[CALL:%.*]] = call range(i32 0, 3) i32 @external()
 ; CHECK-NEXT:    ret i32 [[CALL]]
 ;
-  %call = call i32 @external() , !range !0
+  %call = call range(i32 0, 3) i32 @external()
   %urem = urem i32 %call, 3
   ret i32 %urem
 }
-
-!0 = !{i32 0, i32 3}
 
 define i32 @rem5(i32 %x, i32 %y) {
 ; CHECK-LABEL: @rem5(

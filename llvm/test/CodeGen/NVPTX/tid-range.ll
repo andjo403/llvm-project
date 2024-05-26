@@ -5,7 +5,7 @@ declare i32 @get_register()
 
 define i1 @test1() {
 entry:
-  %call = call i32 @llvm.nvvm.read.ptx.sreg.tid.x(), !range !0
+  %call = call range(i32 0, 3) i32 @llvm.nvvm.read.ptx.sreg.tid.x()
   %cmp = icmp eq i32 %call, 1
   ret i1 %cmp
 }
@@ -16,5 +16,3 @@ entry:
 ; CHECK: st.param.b32 [func_retval0+0], %[[R]];
 
 declare i32 @llvm.nvvm.read.ptx.sreg.tid.x()
-
-!0 = !{ i32 0, i32 3 }

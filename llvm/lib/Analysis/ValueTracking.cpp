@@ -1600,14 +1600,10 @@ static void computeKnownBitsFromOperator(const Operator *I,
     // If range metadata is attached to this call, set known bits from that,
     // and then intersect with known bits based on other properties of the
     // function.
-    if (MDNode *MD =
-            Q.IIQ.getMetadata(cast<Instruction>(I), LLVMContext::MD_range))
-      computeKnownBitsFromRangeMetadata(*MD, Known);
-
     const auto *CB = cast<CallBase>(I);
 
     if (std::optional<ConstantRange> Range = CB->getRange())
-      Known = Known.unionWith(Range->toKnownBits());
+      Known = Range->toKnownBits();
 
     if (const Value *RV = CB->getReturnedArgOperand()) {
       if (RV->getType() == I->getType()) {
@@ -3116,8 +3112,6 @@ static bool isKnownNonZeroFromOperator(const Operator *I,
       if (const auto *RP = getArgumentAliasingToReturnedPointer(Call, true))
         return isKnownNonZero(RP, Q, Depth);
     } else {
-      if (MDNode *Ranges = Q.IIQ.getMetadata(Call, LLVMContext::MD_range))
-        return rangeMetadataExcludesValue(Ranges, APInt::getZero(BitWidth));
       if (std::optional<ConstantRange> Range = Call->getRange()) {
         const APInt ZeroValue(Range->getBitWidth(), 0);
         if (!Range->contains(ZeroValue))
@@ -9847,18 +9841,17 @@ ConstantRange llvm::computeConstantRange(const Value *V, bool ForSigned,
     // TODO: Return ConstantRange.
     setLimitForFPToI(cast<Instruction>(V), Lower, Upper);
     CR = ConstantRange::getNonEmpty(Lower, Upper);
-  } else if (const auto *A = dyn_cast<Argument>(V))
+  } else if (const auto *A = dyn_cast<Argument>(V)) {
     if (std::optional<ConstantRange> Range = A->getRange())
       CR = *Range;
-
-  if (auto *I = dyn_cast<Instruction>(V)) {
-    if (auto *Range = IIQ.getMetadata(I, LLVMContext::MD_range))
-      CR = CR.intersectWith(getConstantRangeFromMetadata(*Range));
-
-    if (const auto *CB = dyn_cast<CallBase>(V))
-      if (std::optional<ConstantRange> Range = CB->getRange())
-        CR = CR.intersectWith(*Range);
+  } else if (const auto *LI = dyn_cast<LoadInst>(V)) {
+    if (auto *Range = IIQ.getMetadata(LI, LLVMContext::MD_range))
+      CR = getConstantRangeFromMetadata(*Range);
   }
+
+  if (const auto *CB = dyn_cast<CallBase>(V))
+    if (std::optional<ConstantRange> Range = CB->getRange())
+      CR = CR.intersectWith(*Range);
 
   if (CtxI && AC) {
     // Try to restrict the range based on information from assumptions.

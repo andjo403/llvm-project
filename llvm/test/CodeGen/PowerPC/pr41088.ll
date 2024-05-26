@@ -78,7 +78,7 @@ bb8:                                              ; No predecessors!
   br label %bb12
 
 bb9:                                              ; preds = %bb3
-  %tmp = call i8 @test5(ptr noalias nonnull readonly align 8 dereferenceable(64) undef), !range !0
+  %tmp = call range(i8 0, 5) i8 @test5(ptr noalias nonnull readonly align 8 dereferenceable(64) undef)
   %tmp10 = zext i8 %tmp to i24
   %tmp11 = shl nuw nsw i24 %tmp10, 8
   br label %bb12
@@ -130,5 +130,3 @@ declare i32 @personality(i32, i32, i64, ptr, ptr) unnamed_addr
 declare void @test4(ptr) unnamed_addr
 
 declare i8 @test5(ptr) unnamed_addr
-
-!0 = !{i8 0, i8 5}

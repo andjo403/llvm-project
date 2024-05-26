@@ -19,7 +19,7 @@ define weak_odr amdgpu_kernel void @test_mul24_knownbits_kernel(ptr addrspace(1)
 ; GCN-NEXT:    global_store_dword v[0:1], v2, off
 ; GCN-NEXT:    s_endpgm
 entry:
-  %0 = tail call i32 @llvm.amdgcn.workitem.id.x() #28, !range !4
+  %0 = tail call range(i32 0, 1024) i32 @llvm.amdgcn.workitem.id.x() #28
   %tid = and i32 %0, 3
   %1 = mul nsw i32 %tid, -5
   %v1 = and i32 %1, -32
@@ -47,5 +47,3 @@ define i32 @f(i32 %x, i32 %y) {
 
 ; Function Attrs: nounwind readnone speculatable
 declare i32 @llvm.amdgcn.workitem.id.x() #20
-
-!4 = !{i32 0, i32 1024}

@@ -613,8 +613,7 @@ static Instruction *foldCttzCtlz(IntrinsicInst &II, InstCombinerImpl &IC) {
 
   // Add range attribute since known bits can't completely reflect what we know.
   unsigned BitWidth = Op0->getType()->getScalarSizeInBits();
-  if (BitWidth != 1 && !II.hasRetAttr(Attribute::Range) &&
-      !II.getMetadata(LLVMContext::MD_range)) {
+  if (BitWidth != 1 && !II.hasRetAttr(Attribute::Range)) {
     ConstantRange Range(APInt(BitWidth, DefiniteZeros),
                         APInt(BitWidth, PossibleZeros + 1));
     II.addRangeRetAttr(Range);

@@ -30,7 +30,7 @@ define amdgpu_kernel void @same_address_fence_merge_write2() #0 {
 ; GCN-NEXT:    ds_write2_b64 v3, v[0:1], v[0:1] offset0:140 offset1:206
 ; GCN-NEXT:    s_endpgm
 bb:
-  %tmp = tail call i32 @llvm.amdgcn.workitem.id.x(), !range !0
+  %tmp = tail call range(i32 0, 1024) i32 @llvm.amdgcn.workitem.id.x()
   %tmp1 = getelementptr inbounds [576 x double], ptr addrspace(3) @lds, i32 0, i32 %tmp
   store double 4.000000e+00, ptr addrspace(3) %tmp1, align 8
   %tmp2 = getelementptr inbounds double, ptr addrspace(3) %tmp1, i32 66
@@ -66,5 +66,3 @@ declare void @llvm.amdgcn.s.barrier() #1
 
 attributes #0 = { nounwind readnone speculatable }
 attributes #1 = { convergent nounwind }
-
-!0 = !{i32 0, i32 1024}

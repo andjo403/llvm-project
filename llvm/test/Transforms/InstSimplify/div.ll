@@ -210,10 +210,10 @@ declare i32 @external()
 
 define i32 @div1() {
 ; CHECK-LABEL: @div1(
-; CHECK-NEXT:    [[CALL:%.*]] = call i32 @external(), !range [[RNG0:![0-9]+]]
+; CHECK-NEXT:    [[CALL:%.*]] = call range(i32 0, 3) i32 @external()
 ; CHECK-NEXT:    ret i32 0
 ;
-  %call = call i32 @external(), !range !0
+  %call = call range(i32 0, 3) i32 @external()
   %urem = udiv i32 %call, 3
   ret i32 %urem
 }
@@ -432,8 +432,6 @@ define <2 x i8> @udiv_exact_trailing_zeros_nonuniform_vector(<2 x i8> %x) {
   %r = udiv exact <2 x i8> %o, <i8 12, i8 1>
   ret <2 x i8> %r
 }
-
-!0 = !{i32 0, i32 3}
 
 define i32 @sdiv_one_srem_divisor(i32 %a, i32 %b) {
 ; CHECK-LABEL: @sdiv_one_srem_divisor(

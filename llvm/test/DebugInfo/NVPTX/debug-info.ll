@@ -65,10 +65,10 @@ entry:
   call void @llvm.dbg.value(metadata float %a, metadata !571, metadata !DIExpression()), !dbg !576
   call void @llvm.dbg.value(metadata ptr %x, metadata !572, metadata !DIExpression()), !dbg !577
   call void @llvm.dbg.value(metadata ptr %y, metadata !573, metadata !DIExpression()), !dbg !578
-  %0 = tail call i32 @llvm.nvvm.read.ptx.sreg.ctaid.x() #3, !dbg !579, !range !616
-  %1 = tail call i32 @llvm.nvvm.read.ptx.sreg.ntid.x() #3, !dbg !617, !range !661
+  %0 = tail call range(i32 0, 65535) i32 @llvm.nvvm.read.ptx.sreg.ctaid.x() #3, !dbg !579
+  %1 = tail call range(i32 1, 1025) i32 @llvm.nvvm.read.ptx.sreg.ntid.x() #3, !dbg !617
   %mul = mul nuw nsw i32 %1, %0, !dbg !662
-  %2 = tail call i32 @llvm.nvvm.read.ptx.sreg.tid.x() #3, !dbg !663, !range !691
+  %2 = tail call range(i32 0, 1024) i32 @llvm.nvvm.read.ptx.sreg.tid.x() #3, !dbg !663
   %add = add nuw nsw i32 %mul, %2, !dbg !692
   call void @llvm.dbg.value(metadata i32 %add, metadata !574, metadata !DIExpression()), !dbg !693
   %cmp = icmp slt i32 %add, %n, !dbg !694
@@ -9043,7 +9043,6 @@ attributes #3 = { nounwind }
 !613 = !{!614, !598}
 !614 = !DIDerivedType(tag: DW_TAG_pointer_type, baseType: !582, size: 64)
 !615 = distinct !DILocation(line: 6, column: 11, scope: !566)
-!616 = !{i32 0, i32 65535}
 !617 = !DILocation(line: 89, column: 180, scope: !618, inlinedAt: !660)
 !618 = distinct !DISubprogram(name: "__fetch_builtin_x", linkageName: "_ZN25__cuda_builtin_blockDim_t17__fetch_builtin_xEv", scope: !619, file: !581, line: 89, type: !585, isLocal: false, isDefinition: true, scopeLine: 89, flags: DIFlagPrototyped, isOptimized: true, unit: !0, declaration: !621, retainedNodes: !2)
 !619 = distinct !DICompositeType(tag: DW_TAG_structure_type, name: "__cuda_builtin_blockDim_t", file: !581, line: 88, size: 8, elements: !620, identifier: "_ZTS25__cuda_builtin_blockDim_t")
@@ -9088,7 +9087,6 @@ attributes #3 = { nounwind }
 !658 = !{!659, !643}
 !659 = !DIDerivedType(tag: DW_TAG_pointer_type, baseType: !619, size: 64)
 !660 = distinct !DILocation(line: 6, column: 24, scope: !566)
-!661 = !{i32 1, i32 1025}
 !662 = !DILocation(line: 6, column: 22, scope: !566)
 !663 = !DILocation(line: 67, column: 180, scope: !664, inlinedAt: !690)
 !664 = distinct !DISubprogram(name: "__fetch_builtin_x", linkageName: "_ZN26__cuda_builtin_threadIdx_t17__fetch_builtin_xEv", scope: !665, file: !581, line: 67, type: !585, isLocal: false, isDefinition: true, scopeLine: 67, flags: DIFlagPrototyped, isOptimized: true, unit: !0, declaration: !667, retainedNodes: !2)
@@ -9118,7 +9116,6 @@ attributes #3 = { nounwind }
 !688 = !{!689, !673}
 !689 = !DIDerivedType(tag: DW_TAG_pointer_type, baseType: !665, size: 64)
 !690 = distinct !DILocation(line: 6, column: 37, scope: !566)
-!691 = !{i32 0, i32 1024}
 !692 = !DILocation(line: 6, column: 35, scope: !566)
 !693 = !DILocation(line: 6, column: 7, scope: !566)
 !694 = !DILocation(line: 7, column: 9, scope: !695)

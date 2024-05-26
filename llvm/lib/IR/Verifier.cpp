@@ -5182,8 +5182,7 @@ void Verifier::visitInstruction(Instruction &I) {
   }
 
   if (MDNode *Range = I.getMetadata(LLVMContext::MD_range)) {
-    Check(isa<LoadInst>(I) || isa<CallInst>(I) || isa<InvokeInst>(I),
-          "Ranges are only for loads, calls and invokes!", &I);
+    Check(isa<LoadInst>(I), "Ranges are only for loads!", &I);
     visitRangeMetadata(I, Range, I.getType());
   }
 

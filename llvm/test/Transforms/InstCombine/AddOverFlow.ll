@@ -43,26 +43,24 @@ define i16 @zero_sign_bit2(i16 %a, i16 %b) {
 
 declare i16 @bounded(i16 %input);
 declare i32 @__gxx_personality_v0(...);
-!0 = !{i16 0, i16 32768} ; [0, 32767]
-!1 = !{i16 0, i16 32769} ; [0, 32768]
 
 define i16 @add_bounded_values(i16 %a, i16 %b) personality ptr @__gxx_personality_v0 {
 ; CHECK-LABEL: @add_bounded_values(
 ; CHECK-NEXT:  entry:
-; CHECK-NEXT:    [[C:%.*]] = call i16 @bounded(i16 [[A:%.*]]), !range [[RNG0:![0-9]+]]
-; CHECK-NEXT:    [[D:%.*]] = invoke i16 @bounded(i16 [[B:%.*]])
-; CHECK-NEXT:    to label [[CONT:%.*]] unwind label [[LPAD:%.*]], !range [[RNG0]]
+; CHECK-NEXT:    [[C:%.*]] = call range(i16 0, -32768) i16 @bounded(i16 [[A:%.*]])
+; CHECK-NEXT:    [[D:%.*]] = invoke range(i16 0, -32768) i16 @bounded(i16 [[B:%.*]])
+; CHECK-NEXT:            to label [[CONT:%.*]] unwind label [[LPAD:%.*]]
 ; CHECK:       cont:
 ; CHECK-NEXT:    [[E:%.*]] = add nuw i16 [[C]], [[D]]
 ; CHECK-NEXT:    ret i16 [[E]]
 ; CHECK:       lpad:
 ; CHECK-NEXT:    [[TMP0:%.*]] = landingpad { ptr, i32 }
-; CHECK-NEXT:    filter [0 x ptr] zeroinitializer
+; CHECK-NEXT:            filter [0 x ptr] zeroinitializer
 ; CHECK-NEXT:    ret i16 42
 ;
 entry:
-  %c = call i16 @bounded(i16 %a), !range !0
-  %d = invoke i16 @bounded(i16 %b) to label %cont unwind label %lpad, !range !0
+  %c = call range(i16 0, 32768) i16 @bounded(i16 %a)
+  %d = invoke range(i16 0, 32768) i16 @bounded(i16 %b) to label %cont unwind label %lpad
 cont:
 ; %c and %d are in [0, 32767]. Therefore, %c + %d doesn't unsigned overflow.
   %e = add i16 %c, %d
@@ -76,20 +74,20 @@ lpad:
 define i16 @add_bounded_values_2(i16 %a, i16 %b) personality ptr @__gxx_personality_v0 {
 ; CHECK-LABEL: @add_bounded_values_2(
 ; CHECK-NEXT:  entry:
-; CHECK-NEXT:    [[C:%.*]] = call i16 @bounded(i16 [[A:%.*]]), !range [[RNG1:![0-9]+]]
-; CHECK-NEXT:    [[D:%.*]] = invoke i16 @bounded(i16 [[B:%.*]])
-; CHECK-NEXT:    to label [[CONT:%.*]] unwind label [[LPAD:%.*]], !range [[RNG1]]
+; CHECK-NEXT:    [[C:%.*]] = call range(i16 0, -32767) i16 @bounded(i16 [[A:%.*]])
+; CHECK-NEXT:    [[D:%.*]] = invoke range(i16 0, -32767) i16 @bounded(i16 [[B:%.*]])
+; CHECK-NEXT:            to label [[CONT:%.*]] unwind label [[LPAD:%.*]]
 ; CHECK:       cont:
 ; CHECK-NEXT:    [[E:%.*]] = add i16 [[C]], [[D]]
 ; CHECK-NEXT:    ret i16 [[E]]
 ; CHECK:       lpad:
 ; CHECK-NEXT:    [[TMP0:%.*]] = landingpad { ptr, i32 }
-; CHECK-NEXT:    filter [0 x ptr] zeroinitializer
+; CHECK-NEXT:            filter [0 x ptr] zeroinitializer
 ; CHECK-NEXT:    ret i16 42
 ;
 entry:
-  %c = call i16 @bounded(i16 %a), !range !1
-  %d = invoke i16 @bounded(i16 %b) to label %cont unwind label %lpad, !range !1
+  %c = call range(i16 0, 32769) i16 @bounded(i16 %a)
+  %d = invoke range(i16 0, 32769) i16 @bounded(i16 %b) to label %cont unwind label %lpad
 cont:
 ; Similar to add_bounded_values, but %c and %d are in [0, 32768]. Therefore,
 ; %c + %d may unsigned overflow and we cannot add NUW.

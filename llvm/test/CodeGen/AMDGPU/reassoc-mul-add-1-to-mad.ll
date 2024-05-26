@@ -3394,7 +3394,7 @@ define amdgpu_kernel void @compute_mad(ptr addrspace(4) %i18, ptr addrspace(4) %
 ; GFX10-NEXT:    global_store_dword v[1:2], v0, off
 ; GFX10-NEXT:    s_endpgm
 bb:
-  %i = tail call i32 @llvm.amdgcn.workitem.id.x(), !range !0
+  %i = tail call range(i32 0, 1024) i32 @llvm.amdgcn.workitem.id.x()
   %i2 = add i32 %arg1, 1
   %i3 = mul i32 %i2, %i
   %i4 = add i32 %i3, %i2
@@ -3895,5 +3895,3 @@ declare i64 @llvm.amdgcn.mul.i24(i32, i32)
 attributes #0 = { mustprogress nofree norecurse nosync nounwind willreturn memory(none) }
 attributes #1 = { mustprogress nofree nosync nounwind willreturn memory(read, argmem: readwrite, inaccessiblemem: none) }
 attributes #2 = { mustprogress nocallback nofree nosync nounwind speculatable willreturn memory(none) }
-
-!0 = !{i32 0, i32 1024}

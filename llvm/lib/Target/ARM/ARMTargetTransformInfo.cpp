@@ -216,9 +216,6 @@ ARMTTIImpl::instCombineIntrinsic(InstCombiner &IC, IntrinsicInst &II) const {
       return IC.replaceInstUsesWith(II, ArgArg);
     }
 
-    if (II.getMetadata(LLVMContext::MD_range))
-      break;
-
     ConstantRange Range(APInt(32, 0), APInt(32, 0x10000));
 
     if (auto CurrentRange = II.getRange()) {

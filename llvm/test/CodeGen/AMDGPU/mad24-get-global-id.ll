@@ -17,8 +17,8 @@ define amdgpu_kernel void @get_global_id_0(ptr addrspace(1) %out) #1 {
   %workgroup.size.xy = load i32, ptr addrspace(4) %gep, align 4, !invariant.load !0
   %workgroup.size.x = and i32 %workgroup.size.xy, 65535
 
-  %workitem.id.x = call i32 @llvm.amdgcn.workitem.id.x(), !range !1
-  %workgroup.id.x = call i32 @llvm.amdgcn.workgroup.id.x(), !range !2
+  %workitem.id.x = call range(i32 0, 1024) i32 @llvm.amdgcn.workitem.id.x()
+  %workgroup.id.x = call range(i32 0, 16777216) i32 @llvm.amdgcn.workgroup.id.x()
 
   %mul = mul i32 %workgroup.id.x, %workgroup.size.x
   %add = add i32 %mul, %workitem.id.x
@@ -31,5 +31,3 @@ attributes #0 = { nounwind readnone }
 attributes #1 = { nounwind }
 
 !0 = !{}
-!1 = !{i32 0, i32 1024}
-!2 = !{i32 0, i32 16777216}

@@ -78,7 +78,7 @@ define void @load_nonnull(ptr %p, ptr %p2) {
 
 define void @call_range(ptr %p) {
 ; CHECK-LABEL: @call_range(
-; CHECK-NEXT:    [[V:%.*]] = call i32 @get_i32(), !range [[RNG0]]
+; CHECK-NEXT:    [[V:%.*]] = call range(i32 0, 10) i32 @get_i32()
 ; CHECK-NEXT:    call void @use(i1 true)
 ; CHECK-NEXT:    [[C2:%.*]] = icmp ult i32 [[V]], 9
 ; CHECK-NEXT:    call void @use(i1 [[C2]])
@@ -87,7 +87,7 @@ define void @call_range(ptr %p) {
 ; CHECK-NEXT:    call void @use(i1 [[C4]])
 ; CHECK-NEXT:    ret void
 ;
-  %v = call i32 @get_i32(), !range !{i32 0, i32 10}
+  %v = call range(i32 0, 10) i32 @get_i32()
   %c1 = icmp ult i32 %v, 10
   call void @use(i1 %c1)
   %c2 = icmp ult i32 %v, 9

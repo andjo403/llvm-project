@@ -2442,7 +2442,7 @@ TEST_F(ComputeKnownBitsTest, ComputeKnownBitsReturnedRangeConflict) {
       "declare i16 @foo(i16 returned)\n"
       "\n"
       "define i16 @test() {\n"
-      "  %A = call i16 @foo(i16 4095), !range !{i16 32, i16 33}\n"
+      "  %A = call range(i16 32, 33) i16 @foo(i16 4095)\n"
       "  ret i16 %A\n"
       "}\n");
   // The call returns 32 according to range metadata, but 4095 according to the

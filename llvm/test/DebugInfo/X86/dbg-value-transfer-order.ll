@@ -62,7 +62,7 @@ while.body:                                       ; preds = %while.body.lr.ph, %
   br i1 %tobool1, label %if.then, label %if.end
 
 if.then:
-  %1 = call i32 @if_then(), !dbg !48, !range !49
+  %1 = call range(i32 0, 33) i32 @if_then(), !dbg !48
   br label %if.end
 
 if.end:
@@ -134,7 +134,6 @@ attributes #1 = { nounwind readnone speculatable }
 !46 = !DILocation(line: 5, column: 12, scope: !31)
 !47 = !DILocation(line: 6, column: 3, scope: !31)
 !48 = !DILocation(line: 7, column: 41, scope: !40)
-!49 = !{i32 0, i32 33}
 !50 = !DILocation(line: 7, column: 27, scope: !40)
 !51 = !DILocation(line: 7, column: 14, scope: !40)
 !52 = !DILocation(line: 8, column: 28, scope: !40)

@@ -704,11 +704,9 @@ int FunctionComparator::cmpOperations(const Instruction *L,
     if (int Res = cmpOperandBundlesSchema(*CBL, *CBR))
       return Res;
     if (const CallInst *CI = dyn_cast<CallInst>(L))
-      if (int Res = cmpNumbers(CI->getTailCallKind(),
-                               cast<CallInst>(R)->getTailCallKind()))
-        return Res;
-    return cmpMDNode(L->getMetadata(LLVMContext::MD_range),
-                     R->getMetadata(LLVMContext::MD_range));
+      return cmpNumbers(CI->getTailCallKind(),
+                        cast<CallInst>(R)->getTailCallKind());
+    return 0;
   }
   if (const InsertValueInst *IVI = dyn_cast<InsertValueInst>(L)) {
     ArrayRef<unsigned> LIndices = IVI->getIndices();
