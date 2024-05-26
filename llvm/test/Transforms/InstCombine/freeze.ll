@@ -1092,11 +1092,11 @@ declare i32 @foo.i32()
 
 define i32 @freeze_call_with_range() {
 ; CHECK-LABEL: @freeze_call_with_range(
-; CHECK-NEXT:    [[X:%.*]] = call i32 @foo.i32(), !range [[RNG2]]
+; CHECK-NEXT:    [[X:%.*]] = call range(i32 0, 100) i32 @foo.i32()
 ; CHECK-NEXT:    [[X_FR:%.*]] = freeze i32 [[X]]
 ; CHECK-NEXT:    ret i32 [[X_FR]]
 ;
-  %x = call i32 @foo.i32(), !range !2
+  %x = call range(i32 0, 100) i32 @foo.i32()
   %x.fr = freeze i32 %x
   ret i32 %x.fr
 }

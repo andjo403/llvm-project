@@ -50,9 +50,6 @@ INITIALIZE_PASS(NVVMIntrRange, "nvvm-intr-range",
 // Adds the passed-in [Low,High) range information as metadata to the
 // passed-in call instruction.
 static bool addRangeAttr(uint64_t Low, uint64_t High, IntrinsicInst *II) {
-  if (II->getMetadata(LLVMContext::MD_range))
-    return false;
-
   const uint64_t BitWidth = II->getType()->getIntegerBitWidth();
   ConstantRange Range(APInt(BitWidth, Low), APInt(BitWidth, High));
 

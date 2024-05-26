@@ -3752,11 +3752,10 @@ static Value *simplifyICmpWithIntrinsicOnLHS(CmpInst::Predicate Pred,
 /// Helper method to get range from metadata or attribute.
 static std::optional<ConstantRange> getRange(Value *V,
                                              const InstrInfoQuery &IIQ) {
-  if (Instruction *I = dyn_cast<Instruction>(V))
-    if (MDNode *MD = IIQ.getMetadata(I, LLVMContext::MD_range))
+  if (const auto *LI = dyn_cast<LoadInst>(V)) {
+    if (MDNode *MD = IIQ.getMetadata(LI, LLVMContext::MD_range))
       return getConstantRangeFromMetadata(*MD);
-
-  if (const Argument *A = dyn_cast<Argument>(V))
+  } else if (const Argument *A = dyn_cast<Argument>(V))
     return A->getRange();
   else if (const CallBase *CB = dyn_cast<CallBase>(V))
     return CB->getRange();

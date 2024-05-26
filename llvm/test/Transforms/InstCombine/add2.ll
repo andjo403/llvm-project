@@ -329,7 +329,7 @@ define i16 @mul_add_to_mul_9(i16 %a) {
 ; ValueTracking uses that range.
 define i16 @add_cttz(i16 %a) {
 ; CHECK-LABEL: @add_cttz(
-; CHECK-NEXT:    [[CTTZ:%.*]] = call i16 @llvm.cttz.i16(i16 [[A:%.*]], i1 true), !range [[RNG0:![0-9]+]]
+; CHECK-NEXT:    [[CTTZ:%.*]] = call range(i16 0, 8) i16 @llvm.cttz.i16(i16 [[A:%.*]], i1 true)
 ; CHECK-NEXT:    [[B:%.*]] = or disjoint i16 [[CTTZ]], -8
 ; CHECK-NEXT:    ret i16 [[B]]
 ;
@@ -340,18 +340,17 @@ define i16 @add_cttz(i16 %a) {
   ;     add %cttz, 1111 1111 1111 1000 ; decimal -8
   ; to
   ;     or  %cttz, 1111 1111 1111 1000
-  %cttz = call i16 @llvm.cttz.i16(i16 %a, i1 true), !range !0
+  %cttz = call range(i16 0, 8) i16 @llvm.cttz.i16(i16 %a, i1 true)
   %b = add i16 %cttz, -8
   ret i16 %b
 }
 declare i16 @llvm.cttz.i16(i16, i1)
-!0 = !{i16 0, i16 8}
 
 ; Similar to @add_cttz, but in this test, the range implied by the
 ; intrinsic is more strict. Therefore, ValueTracking uses that range.
 define i16 @add_cttz_2(i16 %a) {
 ; CHECK-LABEL: @add_cttz_2(
-; CHECK-NEXT:    [[CTTZ:%.*]] = call i16 @llvm.cttz.i16(i16 [[A:%.*]], i1 true), !range [[RNG1:![0-9]+]]
+; CHECK-NEXT:    [[CTTZ:%.*]] = call range(i16 0, 32) i16 @llvm.cttz.i16(i16 [[A:%.*]], i1 true)
 ; CHECK-NEXT:    [[B:%.*]] = or disjoint i16 [[CTTZ]], -16
 ; CHECK-NEXT:    ret i16 [[B]]
 ;
@@ -362,11 +361,10 @@ define i16 @add_cttz_2(i16 %a) {
   ;     add %cttz, 1111 1111 1111 0000 ; decimal -16
   ; to
   ;     or  %cttz, 1111 1111 1111 0000
-  %cttz = call i16 @llvm.cttz.i16(i16 %a, i1 true), !range !1
+  %cttz = call range(i16 0, 32) i16 @llvm.cttz.i16(i16 %a, i1 true)
   %b = add i16 %cttz, -16
   ret i16 %b
 }
-!1 = !{i16 0, i16 32}
 
 define i32 @add_or_and(i32 %x, i32 %y) {
 ; CHECK-LABEL: @add_or_and(

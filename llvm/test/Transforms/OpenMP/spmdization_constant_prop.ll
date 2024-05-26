@@ -118,7 +118,7 @@ entry:
   br i1 %tobool.not, label %if.else, label %if.then
 
 if.then:                                          ; preds = %entry
-  %2 = call i32 @llvm.amdgcn.workitem.id.x() #13, !range !11
+  %2 = call range(i32 0, 1024) i32 @llvm.amdgcn.workitem.id.x() #13
   %3 = call i32 @llvm.amdgcn.workgroup.id.x() #13
   %4 = call align 4 dereferenceable(64) ptr addrspace(4) @llvm.amdgcn.dispatch.ptr() #13
   %5 = getelementptr i8, ptr addrspace(4) %4, i64 12
@@ -312,7 +312,6 @@ attributes #15 = { convergent nounwind }
 !8 = !{!"any pointer", !9, i64 0}
 !9 = !{!"omnipotent char", !10, i64 0}
 !10 = !{!"Simple C/C++ TBAA"}
-!11 = !{i32 0, i32 1024}
 !12 = !{}
 !13 = !{i16 1, i16 1025}
 !14 = !{!15, !15, i64 0}
