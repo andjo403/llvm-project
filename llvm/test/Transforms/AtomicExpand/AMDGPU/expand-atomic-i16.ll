@@ -176,7 +176,7 @@ define i16 @test_atomicrmw_and_i16_global_agent_align4(ptr addrspace(1) %ptr, i1
   ret i16 %res
 }
 
-; Drop unknown metadata and noundef
+; Drop unknown metadata
 define i16 @test_atomicrmw_and_i16_global_agent_drop_md(ptr addrspace(1) %ptr, i16 %value) {
 ; CHECK-LABEL: @test_atomicrmw_and_i16_global_agent_drop_md(
 ; CHECK-NEXT:    [[ALIGNEDADDR:%.*]] = call ptr addrspace(1) @llvm.ptrmask.p1.i64(ptr addrspace(1) [[PTR:%.*]], i64 -4)
@@ -194,7 +194,7 @@ define i16 @test_atomicrmw_and_i16_global_agent_drop_md(ptr addrspace(1) %ptr, i
 ; CHECK-NEXT:    [[EXTRACTED:%.*]] = trunc i32 [[SHIFTED]] to i16
 ; CHECK-NEXT:    ret i16 [[EXTRACTED]]
 ;
-  %res = atomicrmw and ptr addrspace(1) %ptr, i16 %value syncscope("agent") seq_cst, !noundef !0, !some.unknown.md !0
+  %res = atomicrmw and ptr addrspace(1) %ptr, i16 %value syncscope("agent") seq_cst, !some.unknown.md !0
   ret i16 %res
 }
 
@@ -207,11 +207,11 @@ define i16 @test_atomicrmw_and_i16_global_agent_align4_drop_md(ptr addrspace(1) 
 ; CHECK-NEXT:    [[EXTRACTED:%.*]] = trunc i32 [[TMP2]] to i16
 ; CHECK-NEXT:    ret i16 [[EXTRACTED]]
 ;
-  %res = atomicrmw and ptr addrspace(1) %ptr, i16 %value syncscope("agent") seq_cst, align 4, !noundef !0, !some.unknown.md !0
+  %res = atomicrmw and ptr addrspace(1) %ptr, i16 %value syncscope("agent") seq_cst, align 4, !some.unknown.md !0
   ret i16 %res
 }
 
-; Drop noundef, preserve mmra
+; Drop unknown metadata, preserve mmra
 define i16 @test_atomicrmw_and_i16_global_agent_preserve_mmra(ptr addrspace(1) %ptr, i16 %value) {
 ; CHECK-LABEL: @test_atomicrmw_and_i16_global_agent_preserve_mmra(
 ; CHECK-NEXT:    [[ALIGNEDADDR:%.*]] = call ptr addrspace(1) @llvm.ptrmask.p1.i64(ptr addrspace(1) [[PTR:%.*]], i64 -4)
@@ -229,11 +229,11 @@ define i16 @test_atomicrmw_and_i16_global_agent_preserve_mmra(ptr addrspace(1) %
 ; CHECK-NEXT:    [[EXTRACTED:%.*]] = trunc i32 [[SHIFTED]] to i16
 ; CHECK-NEXT:    ret i16 [[EXTRACTED]]
 ;
-  %res = atomicrmw and ptr addrspace(1) %ptr, i16 %value syncscope("agent") seq_cst, !noundef !0, !mmra !1
+  %res = atomicrmw and ptr addrspace(1) %ptr, i16 %value syncscope("agent") seq_cst, !some.unknown.md !0, !mmra !1
   ret i16 %res
 }
 
-; Drop noundef, preserve mmra
+; Drop unknown metadata, preserve mmra
 define i16 @test_atomicrmw_and_i16_global_agent_align4_preserve_mmra(ptr addrspace(1) %ptr, i16 %value) {
 ; CHECK-LABEL: @test_atomicrmw_and_i16_global_agent_align4_preserve_mmra(
 ; CHECK-NEXT:    [[TMP1:%.*]] = zext i16 [[VALUE:%.*]] to i32
@@ -242,7 +242,7 @@ define i16 @test_atomicrmw_and_i16_global_agent_align4_preserve_mmra(ptr addrspa
 ; CHECK-NEXT:    [[EXTRACTED:%.*]] = trunc i32 [[TMP2]] to i16
 ; CHECK-NEXT:    ret i16 [[EXTRACTED]]
 ;
-  %res = atomicrmw and ptr addrspace(1) %ptr, i16 %value syncscope("agent") seq_cst, align 4, !noundef !0, !mmra !1
+  %res = atomicrmw and ptr addrspace(1) %ptr, i16 %value syncscope("agent") seq_cst, align 4, !some.unknown.md !0, !mmra !1
   ret i16 %res
 }
 

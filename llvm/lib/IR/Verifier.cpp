@@ -5201,6 +5201,14 @@ void Verifier::visitInstruction(Instruction &I) {
     Check(MD->getNumOperands() == 0, "nonnull metadata must be empty", &I);
   }
 
+  if (MDNode *Noundef = I.getMetadata(LLVMContext::MD_noundef)) {
+    Check(isa<LoadInst>(I),
+          "noundef applies only to load instructions, use attributes"
+          " for calls or invokes",
+          &I);
+    Check(Noundef->getNumOperands() == 0, "noundef metadata must be empty", &I);
+  }
+
   if (MDNode *MD = I.getMetadata(LLVMContext::MD_dereferenceable))
     visitDereferenceableMetadata(I, MD);
 
