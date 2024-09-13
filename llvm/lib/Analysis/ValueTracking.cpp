@@ -539,6 +539,28 @@ bool llvm::isValidAssumeForContext(const Instruction *Inv,
   return false;
 }
 
+bool llvm::isValidAssumeForValue(const Instruction *I, const Value *V,
+                                 const DominatorTree *DT,
+                                 bool AllowEphemerals) {
+  assert(isa<Instruction>(V) || isa<Argument>(V));
+
+  if (const auto *Arg = dyn_cast<Argument>(V)) {
+    const BasicBlock *EntryBlock = &Arg->getParent()->getEntryBlock();
+
+    if (I->getParent() != EntryBlock)
+      return false;
+
+    if (!isGuaranteedToTransferExecutionToSuccessor(EntryBlock->begin(),
+                                                    I->getIterator(), 15))
+      return false;
+
+    return AllowEphemerals || !isEphemeralValueOf(I, V);
+  }
+
+  const auto *CxtI = cast<Instruction>(V);
+  return isValidAssumeForContext(I, CxtI, DT, AllowEphemerals);
+}
+
 // TODO: cmpExcludesZero misses many cases where `RHS` is non-constant but
 // we still have enough information about `RHS` to conclude non-zero. For
 // example Pred=EQ, RHS=isKnownNonZero. cmpExcludesZero is called in loops

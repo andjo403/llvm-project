@@ -3059,18 +3059,26 @@ Instruction *InstCombinerImpl::visitCallInst(CallInst &CI) {
       return eraseInstFromFunction(*II);
     }
 
-    // assume( (load addr) != null ) -> add 'nonnull' metadata to load
-    // (if assume is valid at the load)
-    Instruction *LHS;
-    if (match(IIOperand, m_SpecificICmp(ICmpInst::ICMP_NE, m_Instruction(LHS),
-                                        m_Zero())) &&
-        LHS->getOpcode() == Instruction::Load &&
-        LHS->getType()->isPointerTy() &&
-        isValidAssumeForContext(II, LHS, &DT)) {
-      MDNode *MD = MDNode::get(II->getContext(), std::nullopt);
-      LHS->setMetadata(LLVMContext::MD_nonnull, MD);
-      LHS->setMetadata(LLVMContext::MD_noundef, MD);
-      return RemoveConditionFromAssume(II);
+    // assume( (load addr) != null ) -> add 'nonnull' and 'noundef' metadata
+    // to load
+    // assume( argument != null ) -> add 'nonnull' and 'noundef'
+    // parameter attribute
+    // (if assume is valid for the load or argument)
+    Value *LHS;
+    if (match(IIOperand,
+              m_SpecificICmp(ICmpInst::ICMP_NE, m_Value(LHS), m_Zero())) &&
+        isa<LoadInst, Argument>(LHS) && LHS->getType()->isPointerTy() &&
+        isValidAssumeForValue(II, LHS)) {
+      if (auto *L = dyn_cast<LoadInst>(LHS)) {
+        MDNode *MD = MDNode::get(II->getContext(), std::nullopt);
+        L->setMetadata(LLVMContext::MD_nonnull, MD);
+        L->setMetadata(LLVMContext::MD_noundef, MD);
+        return RemoveConditionFromAssume(II);
+      } else if (auto *Arg = dyn_cast<Argument>(LHS)) {
+        Arg->addAttr(Attribute::NonNull);
+        Arg->addAttr(Attribute::NoUndef);
+        return RemoveConditionFromAssume(II);
+      }
 
       // TODO: apply nonnull return attributes to calls and invokes
       // TODO: apply range metadata for range check patterns?

@@ -883,6 +883,17 @@ bool isValidAssumeForContext(const Instruction *I, const Instruction *CxtI,
                              const DominatorTree *DT = nullptr,
                              bool AllowEphemerals = false);
 
+/// Return true if it is valid to use the assumptions provided by an
+/// assume intrinsic, Assume, at the point in the control-flow identified by the
+/// definition of the value, V. By default, ephemeral values of the assumption
+/// are treated as an invalid context, to prevent the assumption from being used
+/// to optimize away its argument. If the caller can ensure that this won't
+/// happen, it can call with AllowEphemerals set to true to get more valid
+/// assumptions.
+bool isValidAssumeForValue(const Instruction *I, const Value *V,
+                           const DominatorTree *DT = nullptr,
+                           bool AllowEphemerals = false);
+
 enum class OverflowResult {
   /// Always overflows in the direction of signed/unsigned min value.
   AlwaysOverflowsLow,

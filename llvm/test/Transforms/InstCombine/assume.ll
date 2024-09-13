@@ -381,6 +381,33 @@ define i1 @nonnull5(ptr %a) {
   ret i1 %rval
 }
 
+define i1 @nonnullArg(ptr %a) {
+; CHECK-LABEL: @nonnullArg(
+; CHECK-NEXT:    tail call void @escape(ptr nonnull [[A:%.*]])
+; CHECK-NEXT:    ret i1 false
+;
+  %cmp = icmp ne ptr %a, null
+  tail call void @llvm.assume(i1 %cmp)
+  tail call void @escape(ptr %a)
+  %rval = icmp eq ptr %a, null
+  ret i1 %rval
+}
+
+define void @nonnullArgEphemeral(ptr %a) {
+; DEFAULT-LABEL: @nonnullArgEphemeral(
+; DEFAULT-NEXT:    [[CMP:%.*]] = icmp ne ptr [[A:%.*]], null
+; DEFAULT-NEXT:    tail call void @llvm.assume(i1 [[CMP]])
+; DEFAULT-NEXT:    ret void
+;
+; BUNDLES-LABEL: @nonnullArgEphemeral(
+; BUNDLES-NEXT:    call void @llvm.assume(i1 true) [ "nonnull"(ptr [[A:%.*]]) ]
+; BUNDLES-NEXT:    ret void
+;
+  %cmp = icmp ne ptr %a, null
+  tail call void @llvm.assume(i1 %cmp)
+  ret void
+}
+
 ; PR35846 - https://bugs.llvm.org/show_bug.cgi?id=35846
 
 define i32 @assumption_conflicts_with_known_bits(i32 %a, i32 %b) {
