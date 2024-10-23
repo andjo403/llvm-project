@@ -426,9 +426,7 @@ define i64 @smear_set_bit_different_dest_type_wider_dst(i32 %x) {
 
 define i32 @sext_trunc_nsw(i16 %x) {
 ; CHECK-LABEL: @sext_trunc_nsw(
-; CHECK-NEXT:    [[C:%.*]] = zext i16 [[X:%.*]] to i32
-; CHECK-NEXT:    [[SEXT:%.*]] = shl i32 [[C]], 24
-; CHECK-NEXT:    [[E:%.*]] = ashr exact i32 [[SEXT]], 24
+; CHECK-NEXT:    [[E:%.*]] = sext i16 [[X:%.*]] to i32
 ; CHECK-NEXT:    ret i32 [[E]]
 ;
   %c = trunc nsw i16 %x to i8
@@ -438,9 +436,7 @@ define i32 @sext_trunc_nsw(i16 %x) {
 
 define i16 @sext_trunc_nsw_2(i32 %x) {
 ; CHECK-LABEL: @sext_trunc_nsw_2(
-; CHECK-NEXT:    [[C:%.*]] = trunc i32 [[X:%.*]] to i16
-; CHECK-NEXT:    [[SEXT:%.*]] = shl i16 [[C]], 8
-; CHECK-NEXT:    [[E:%.*]] = ashr exact i16 [[SEXT]], 8
+; CHECK-NEXT:    [[E:%.*]] = trunc nsw i32 [[X:%.*]] to i16
 ; CHECK-NEXT:    ret i16 [[E]]
 ;
   %c = trunc nsw i32 %x to i8
@@ -450,9 +446,7 @@ define i16 @sext_trunc_nsw_2(i32 %x) {
 
 define i16 @sext_trunc_nsw_3(i16 %x) {
 ; CHECK-LABEL: @sext_trunc_nsw_3(
-; CHECK-NEXT:    [[SEXT:%.*]] = shl i16 [[X:%.*]], 8
-; CHECK-NEXT:    [[E:%.*]] = ashr exact i16 [[SEXT]], 8
-; CHECK-NEXT:    ret i16 [[E]]
+; CHECK-NEXT:    ret i16 [[E:%.*]]
 ;
   %c = trunc nsw i16 %x to i8
   %e = sext i8 %c to i16
@@ -463,9 +457,7 @@ define i16 @sext_trunc_nsw_use(i16 %x) {
 ; CHECK-LABEL: @sext_trunc_nsw_use(
 ; CHECK-NEXT:    [[C:%.*]] = trunc nsw i16 [[X:%.*]] to i8
 ; CHECK-NEXT:    call void @use(i8 [[C]])
-; CHECK-NEXT:    [[SEXT:%.*]] = shl i16 [[X]], 8
-; CHECK-NEXT:    [[E:%.*]] = ashr exact i16 [[SEXT]], 8
-; CHECK-NEXT:    ret i16 [[E]]
+; CHECK-NEXT:    ret i16 [[X]]
 ;
   %c = trunc nsw i16 %x to i8
   call void @use(i8 %c)
@@ -475,8 +467,7 @@ define i16 @sext_trunc_nsw_use(i16 %x) {
 
 define <2 x i32> @sext_trunc_nsw_vec(<2 x i16> %x) {
 ; CHECK-LABEL: @sext_trunc_nsw_vec(
-; CHECK-NEXT:    [[C:%.*]] = trunc nsw <2 x i16> [[X:%.*]] to <2 x i8>
-; CHECK-NEXT:    [[E:%.*]] = sext <2 x i8> [[C]] to <2 x i32>
+; CHECK-NEXT:    [[E:%.*]] = sext <2 x i16> [[X:%.*]] to <2 x i32>
 ; CHECK-NEXT:    ret <2 x i32> [[E]]
 ;
   %c = trunc nsw <2 x i16> %x to <2 x i8>

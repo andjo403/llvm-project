@@ -979,8 +979,7 @@ entry:
 
 define i32 @zext_trunc_nuw(i16 %x) {
 ; CHECK-LABEL: @zext_trunc_nuw(
-; CHECK-NEXT:    [[X:%.*]] = and i16 [[X1:%.*]], 255
-; CHECK-NEXT:    [[E1:%.*]] = zext nneg i16 [[X]] to i32
+; CHECK-NEXT:    [[E1:%.*]] = zext nneg i16 [[X:%.*]] to i32
 ; CHECK-NEXT:    ret i32 [[E1]]
 ;
   %c = trunc nuw i16 %x to i8
@@ -990,8 +989,7 @@ define i32 @zext_trunc_nuw(i16 %x) {
 
 define i16 @zext_trunc_nuw_2(i32 %x) {
 ; CHECK-LABEL: @zext_trunc_nuw_2(
-; CHECK-NEXT:    [[C:%.*]] = trunc i32 [[X:%.*]] to i16
-; CHECK-NEXT:    [[E:%.*]] = and i16 [[C]], 255
+; CHECK-NEXT:    [[E:%.*]] = trunc nuw i32 [[X:%.*]] to i16
 ; CHECK-NEXT:    ret i16 [[E]]
 ;
   %c = trunc nuw i32 %x to i8
@@ -1001,8 +999,7 @@ define i16 @zext_trunc_nuw_2(i32 %x) {
 
 define i16 @zext_trunc_nuw_3(i16 %x) {
 ; CHECK-LABEL: @zext_trunc_nuw_3(
-; CHECK-NEXT:    [[E:%.*]] = and i16 [[X:%.*]], 255
-; CHECK-NEXT:    ret i16 [[E]]
+; CHECK-NEXT:    ret i16 [[E:%.*]]
 ;
   %c = trunc nuw i16 %x to i8
   %e = zext i8 %c to i16
@@ -1013,8 +1010,7 @@ define i16 @zext_trunc_nuw_use(i16 %x) {
 ; CHECK-LABEL: @zext_trunc_nuw_use(
 ; CHECK-NEXT:    [[C:%.*]] = trunc nuw i16 [[X:%.*]] to i8
 ; CHECK-NEXT:    call void @use64(i8 [[C]])
-; CHECK-NEXT:    [[E:%.*]] = and i16 [[X]], 255
-; CHECK-NEXT:    ret i16 [[E]]
+; CHECK-NEXT:    ret i16 [[X]]
 ;
   %c = trunc nuw i16 %x to i8
   call void @use64(i8 %c)
@@ -1024,8 +1020,7 @@ define i16 @zext_trunc_nuw_use(i16 %x) {
 
 define <2 x i32> @zext_trunc_nuw_vec(<2 x i16> %x) {
 ; CHECK-LABEL: @zext_trunc_nuw_vec(
-; CHECK-NEXT:    [[X:%.*]] = and <2 x i16> [[X1:%.*]], <i16 255, i16 255>
-; CHECK-NEXT:    [[E1:%.*]] = zext nneg <2 x i16> [[X]] to <2 x i32>
+; CHECK-NEXT:    [[E1:%.*]] = zext nneg <2 x i16> [[X:%.*]] to <2 x i32>
 ; CHECK-NEXT:    ret <2 x i32> [[E1]]
 ;
   %c = trunc nuw <2 x i16> %x to <2 x i8>

@@ -1198,6 +1198,25 @@ Instruction *InstCombinerImpl::visitZExt(ZExtInst &Zext) {
   if (SrcTy->isIntOrIntVectorTy(1) && Zext.hasNonNeg())
     return replaceInstUsesWith(Zext, Constant::getNullValue(Zext.getType()));
 
+  Value *X;
+  // If trunc has nuw flag, then convert directly to final type.
+  if (match(Src, m_NUWTrunc(m_Value(X)))) {
+    unsigned XSize = X->getType()->getScalarSizeInBits();
+    unsigned DstSize = DestTy->getScalarSizeInBits();
+    if (XSize == DstSize)
+      return replaceInstUsesWith(Zext, X);
+    if (XSize < DstSize) {
+      auto *Res = new ZExtInst(X, DestTy);
+      Res->setNonNeg();
+      return Res;
+    }
+    if (XSize > DstSize) {
+      auto *Res = new TruncInst(X, DestTy);
+      Res->setHasNoUnsignedWrap(true);
+      return Res;
+    }
+  }
+
   // Try to extend the entire expression tree to the wide destination type.
   unsigned BitsToClear;
   if (shouldChangeType(SrcTy, DestTy) &&
@@ -1277,7 +1296,6 @@ Instruction *InstCombinerImpl::visitZExt(ZExtInst &Zext) {
 
   // zext(trunc(X) & C) -> (X & zext(C)).
   Constant *C;
-  Value *X;
   if (match(Src, m_OneUse(m_And(m_Trunc(m_Value(X)), m_Constant(C)))) &&
       X->getType() == DestTy)
     return BinaryOperator::CreateAnd(X, Builder.CreateZExt(C, DestTy));
@@ -1491,6 +1509,21 @@ Instruction *InstCombinerImpl::visitSExt(SExtInst &Sext) {
     return CI;
   }
 
+  Value *X;
+  // If trunc has nsw flag, then convert directly to final type.
+  if (match(Src, m_NSWTrunc(m_Value(X)))) {
+    unsigned XBitSize = X->getType()->getScalarSizeInBits();
+    if (XBitSize == DestBitSize)
+      return replaceInstUsesWith(Sext, X);
+    if (XBitSize < DestBitSize)
+      return new SExtInst(X, DestTy);
+    if (XBitSize > DestBitSize) {
+      auto *Res = new TruncInst(X, DestTy);
+      Res->setHasNoSignedWrap(true);
+      return Res;
+    }
+  }
+
   // Try to extend the entire expression tree to the wide destination type.
   if (shouldChangeType(SrcTy, DestTy) && canEvaluateSExtd(Src, DestTy)) {
     // Okay, we can transform this!  Insert the new expression now.
@@ -1512,7 +1545,6 @@ Instruction *InstCombinerImpl::visitSExt(SExtInst &Sext) {
                                       ShAmt);
   }
 
-  Value *X;
   if (match(Src, m_Trunc(m_Value(X)))) {
     // If the input has more sign bits than bits truncated, then convert
     // directly to final type.
