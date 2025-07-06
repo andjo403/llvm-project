@@ -546,7 +546,7 @@ static ValueLatticeElement getFromRangeMetadata(Instruction *BBI) {
   case Instruction::Invoke:
     if (std::optional<ConstantRange> Range = cast<CallBase>(BBI)->getRange())
       return ValueLatticeElement::getRange(*Range);
-    [[fallthrough]];
+    break;
   case Instruction::Load:
     if (MDNode *Ranges = BBI->getMetadata(LLVMContext::MD_range))
       if (isa<IntegerType>(BBI->getType())) {
