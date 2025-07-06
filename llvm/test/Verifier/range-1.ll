@@ -6,7 +6,7 @@ entry:
   ret void
 }
 !0 = !{i8 0, i8 1}
-; CHECK: Ranges are only for loads, calls and invokes!
+; CHECK: Ranges are only for loads!
 ; CHECK-NEXT: store i8 0, ptr %x, align 1, !range !0
 
 define i8 @f2(ptr %x) {
@@ -139,14 +139,6 @@ entry:
 }
 !17 = !{i8 1, i8 3, i8 4, i8 5, i8 6, i8 1}
 ; CHECK: Intervals are contiguous
-
-define i8 @f18() {
-entry:
-  %y = call i8 undef(), !range !18
-  ret i8 %y
-}
-!18 = !{}
-; CHECK: It should have at least one range!
 
 define <2 x i8> @vector_range_wrong_type(ptr %x) {
   %y = load <2 x i8>, ptr %x, !range !19
