@@ -28,7 +28,7 @@ entry:
   %i2 = load i64, ptr addrspace(4) %i, align 8
   %i3 = tail call i32 @llvm.amdgcn.workgroup.id.x()
   %i4 = shl i32 %i3, 8
-  %i5 = tail call i32 @llvm.amdgcn.workitem.id.x(), !range !5
+  %i5 = tail call range(i32 0, 1024) i32 @llvm.amdgcn.workitem.id.x()
   %i6 = add i32 %i4, %i5
   %i7 = trunc i64 %i2 to i32
   %conv = add i32 %i6, %i7
@@ -571,4 +571,3 @@ attributes #1 = { nounwind readnone speculatable willreturn }
 !2 = !{!"ptr", !"ptr", !"ptr", !"float"}
 !3 = !{!"restrict const", !"restrict const", !"restrict", !""}
 !4 = !{i32 256, i32 1, i32 1}
-!5 = !{i32 0, i32 1024}

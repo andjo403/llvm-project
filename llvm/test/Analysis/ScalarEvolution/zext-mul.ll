@@ -20,7 +20,7 @@ define void @no_range() {
 
 ; CHECK-LABEL: @range
 define void @range() {
-  %a = call i32 @get_int(), !range !{i32 0, i32 100}
+  %a = call range(i32 0, 100) i32 @get_int()
   %b = mul i32 %a, 4
   %c = zext i32 %b to i64
   ; CHECK: %c
@@ -30,7 +30,7 @@ define void @range() {
 
 ; CHECK-LABEL: @no_nuw
 define void @no_nuw() {
-  %a = call i32 @get_int(), !range !{i32 0, i32 3}
+  %a = call range(i32 0, 3) i32 @get_int()
   %b = mul i32 %a, -100
   ; CHECK: %b
   ; CHECK-NEXT: -->  (-100 * %a)<nsw>

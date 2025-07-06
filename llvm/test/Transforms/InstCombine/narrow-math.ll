@@ -122,14 +122,14 @@ define i64 @sext_sext_add_extra_use3(i32 %A) {
 
 define i64 @test1(i32 %V) {
 ; CHECK-LABEL: @test1(
-; CHECK-NEXT:    [[CALL1:%.*]] = call i32 @callee(), !range [[RNG0:![0-9]+]]
-; CHECK-NEXT:    [[CALL2:%.*]] = call i32 @callee(), !range [[RNG0]]
+; CHECK-NEXT:    [[CALL1:%.*]] = call range(i32 0, 2000) i32 @callee()
+; CHECK-NEXT:    [[CALL2:%.*]] = call range(i32 0, 2000) i32 @callee()
 ; CHECK-NEXT:    [[NARROW:%.*]] = add nuw nsw i32 [[CALL1]], [[CALL2]]
 ; CHECK-NEXT:    [[ADD:%.*]] = zext nneg i32 [[NARROW]] to i64
 ; CHECK-NEXT:    ret i64 [[ADD]]
 ;
-  %call1 = call i32 @callee(), !range !0
-  %call2 = call i32 @callee(), !range !0
+  %call1 = call range(i32 0, 2000) i32 @callee()
+  %call2 = call range(i32 0, 2000) i32 @callee()
   %zext1 = sext i32 %call1 to i64
   %zext2 = sext i32 %call2 to i64
   %add = add i64 %zext1, %zext2
@@ -138,14 +138,14 @@ define i64 @test1(i32 %V) {
 
 define i64 @test2(i32 %V) {
 ; CHECK-LABEL: @test2(
-; CHECK-NEXT:    [[CALL1:%.*]] = call i32 @callee(), !range [[RNG0]]
-; CHECK-NEXT:    [[CALL2:%.*]] = call i32 @callee(), !range [[RNG0]]
+; CHECK-NEXT:    [[CALL1:%.*]] = call range(i32 0, 2000) i32 @callee()
+; CHECK-NEXT:    [[CALL2:%.*]] = call range(i32 0, 2000) i32 @callee()
 ; CHECK-NEXT:    [[ADD:%.*]] = add nuw nsw i32 [[CALL1]], [[CALL2]]
 ; CHECK-NEXT:    [[ZEXT:%.*]] = zext nneg i32 [[ADD]] to i64
 ; CHECK-NEXT:    ret i64 [[ZEXT]]
 ;
-  %call1 = call i32 @callee(), !range !0
-  %call2 = call i32 @callee(), !range !0
+  %call1 = call range(i32 0, 2000) i32 @callee()
+  %call2 = call range(i32 0, 2000) i32 @callee()
   %add = add i32 %call1, %call2
   %zext = sext i32 %add to i64
   ret i64 %zext
@@ -153,14 +153,14 @@ define i64 @test2(i32 %V) {
 
 define i64 @test3(i32 %V) {
 ; CHECK-LABEL: @test3(
-; CHECK-NEXT:    [[CALL1:%.*]] = call i32 @callee(), !range [[RNG0]]
-; CHECK-NEXT:    [[CALL2:%.*]] = call i32 @callee(), !range [[RNG0]]
+; CHECK-NEXT:    [[CALL1:%.*]] = call range(i32 0, 2000) i32 @callee()
+; CHECK-NEXT:    [[CALL2:%.*]] = call range(i32 0, 2000) i32 @callee()
 ; CHECK-NEXT:    [[NARROW:%.*]] = mul nuw nsw i32 [[CALL1]], [[CALL2]]
 ; CHECK-NEXT:    [[ADD:%.*]] = zext nneg i32 [[NARROW]] to i64
 ; CHECK-NEXT:    ret i64 [[ADD]]
 ;
-  %call1 = call i32 @callee(), !range !0
-  %call2 = call i32 @callee(), !range !0
+  %call1 = call range(i32 0, 2000) i32 @callee()
+  %call2 = call range(i32 0, 2000) i32 @callee()
   %zext1 = sext i32 %call1 to i64
   %zext2 = sext i32 %call2 to i64
   %add = mul i64 %zext1, %zext2
@@ -169,14 +169,14 @@ define i64 @test3(i32 %V) {
 
 define i64 @test4(i32 %V) {
 ; CHECK-LABEL: @test4(
-; CHECK-NEXT:    [[CALL1:%.*]] = call i32 @callee(), !range [[RNG0]]
-; CHECK-NEXT:    [[CALL2:%.*]] = call i32 @callee(), !range [[RNG0]]
+; CHECK-NEXT:    [[CALL1:%.*]] = call range(i32 0, 2000) i32 @callee()
+; CHECK-NEXT:    [[CALL2:%.*]] = call range(i32 0, 2000) i32 @callee()
 ; CHECK-NEXT:    [[ADD:%.*]] = mul nuw nsw i32 [[CALL1]], [[CALL2]]
 ; CHECK-NEXT:    [[ZEXT:%.*]] = zext nneg i32 [[ADD]] to i64
 ; CHECK-NEXT:    ret i64 [[ZEXT]]
 ;
-  %call1 = call i32 @callee(), !range !0
-  %call2 = call i32 @callee(), !range !0
+  %call1 = call range(i32 0, 2000) i32 @callee()
+  %call2 = call range(i32 0, 2000) i32 @callee()
   %add = mul i32 %call1, %call2
   %zext = sext i32 %add to i64
   ret i64 %zext
@@ -461,14 +461,14 @@ define <2 x i64> @test10_vec(<2 x i32> %V) {
 
 define i64 @test11(i32 %V) {
 ; CHECK-LABEL: @test11(
-; CHECK-NEXT:    [[CALL1:%.*]] = call i32 @callee(), !range [[RNG1:![0-9]+]]
-; CHECK-NEXT:    [[CALL2:%.*]] = call i32 @callee(), !range [[RNG1]]
+; CHECK-NEXT:    [[CALL1:%.*]] = call range(i32 -2000, 0) i32 @callee()
+; CHECK-NEXT:    [[CALL2:%.*]] = call range(i32 -2000, 0) i32 @callee()
 ; CHECK-NEXT:    [[NARROW:%.*]] = add nsw i32 [[CALL1]], [[CALL2]]
 ; CHECK-NEXT:    [[ADD:%.*]] = sext i32 [[NARROW]] to i64
 ; CHECK-NEXT:    ret i64 [[ADD]]
 ;
-  %call1 = call i32 @callee(), !range !1
-  %call2 = call i32 @callee(), !range !1
+  %call1 = call range(i32 -2000, 0) i32 @callee()
+  %call2 = call range(i32 -2000, 0) i32 @callee()
   %sext1 = sext i32 %call1 to i64
   %sext2 = sext i32 %call2 to i64
   %add = add i64 %sext1, %sext2
@@ -477,14 +477,14 @@ define i64 @test11(i32 %V) {
 
 define i64 @test12(i32 %V) {
 ; CHECK-LABEL: @test12(
-; CHECK-NEXT:    [[CALL1:%.*]] = call i32 @callee(), !range [[RNG1]]
-; CHECK-NEXT:    [[CALL2:%.*]] = call i32 @callee(), !range [[RNG1]]
+; CHECK-NEXT:    [[CALL1:%.*]] = call range(i32 -2000, 0) i32 @callee()
+; CHECK-NEXT:    [[CALL2:%.*]] = call range(i32 -2000, 0) i32 @callee()
 ; CHECK-NEXT:    [[NARROW:%.*]] = mul nsw i32 [[CALL1]], [[CALL2]]
 ; CHECK-NEXT:    [[ADD:%.*]] = zext nneg i32 [[NARROW]] to i64
 ; CHECK-NEXT:    ret i64 [[ADD]]
 ;
-  %call1 = call i32 @callee(), !range !1
-  %call2 = call i32 @callee(), !range !1
+  %call1 = call range(i32 -2000, 0) i32 @callee()
+  %call2 = call range(i32 -2000, 0) i32 @callee()
   %sext1 = sext i32 %call1 to i64
   %sext2 = sext i32 %call2 to i64
   %add = mul i64 %sext1, %sext2
@@ -493,14 +493,14 @@ define i64 @test12(i32 %V) {
 
 define i64 @test13(i32 %V) {
 ; CHECK-LABEL: @test13(
-; CHECK-NEXT:    [[CALL1:%.*]] = call i32 @callee(), !range [[RNG2:![0-9]+]]
-; CHECK-NEXT:    [[CALL2:%.*]] = call i32 @callee(), !range [[RNG3:![0-9]+]]
+; CHECK-NEXT:    [[CALL1:%.*]] = call range(i32 -512, -255) i32 @callee()
+; CHECK-NEXT:    [[CALL2:%.*]] = call range(i32 -128, 0) i32 @callee()
 ; CHECK-NEXT:    [[NARROW:%.*]] = sub nsw i32 [[CALL1]], [[CALL2]]
 ; CHECK-NEXT:    [[SUB:%.*]] = sext i32 [[NARROW]] to i64
 ; CHECK-NEXT:    ret i64 [[SUB]]
 ;
-  %call1 = call i32 @callee(), !range !2
-  %call2 = call i32 @callee(), !range !3
+  %call1 = call range(i32 -512, -255) i32 @callee()
+  %call2 = call range(i32 -128, 0) i32 @callee()
   %sext1 = sext i32 %call1 to i64
   %sext2 = sext i32 %call2 to i64
   %sub = sub i64 %sext1, %sext2
@@ -509,14 +509,14 @@ define i64 @test13(i32 %V) {
 
 define i64 @test14(i32 %V) {
 ; CHECK-LABEL: @test14(
-; CHECK-NEXT:    [[CALL1:%.*]] = call i32 @callee(), !range [[RNG2]]
-; CHECK-NEXT:    [[CALL2:%.*]] = call i32 @callee(), !range [[RNG0]]
+; CHECK-NEXT:    [[CALL1:%.*]] = call range(i32 -512, -255) i32 @callee()
+; CHECK-NEXT:    [[CALL2:%.*]] = call range(i32 0, 2000) i32 @callee()
 ; CHECK-NEXT:    [[NARROW:%.*]] = sub nuw nsw i32 [[CALL1]], [[CALL2]]
 ; CHECK-NEXT:    [[SUB:%.*]] = zext i32 [[NARROW]] to i64
 ; CHECK-NEXT:    ret i64 [[SUB]]
 ;
-  %call1 = call i32 @callee(), !range !2
-  %call2 = call i32 @callee(), !range !0
+  %call1 = call range(i32 -512, -255) i32 @callee()
+  %call2 = call range(i32 0, 2000) i32 @callee()
   %zext1 = zext i32 %call1 to i64
   %zext2 = zext i32 %call2 to i64
   %sub = sub i64 %zext1, %zext2
@@ -579,15 +579,15 @@ define <2 x i64> @test16vec(<2 x i32> %V) {
 ; won't wrap.
 define i64 @test17(i32 %V) {
 ; CHECK-LABEL: @test17(
-; CHECK-NEXT:    [[CALL1:%.*]] = call i32 @callee(), !range [[RNG0]]
-; CHECK-NEXT:    [[CALL2:%.*]] = call i32 @callee(), !range [[RNG0]]
+; CHECK-NEXT:    [[CALL1:%.*]] = call range(i32 0, 2000) i32 @callee()
+; CHECK-NEXT:    [[CALL2:%.*]] = call range(i32 0, 2000) i32 @callee()
 ; CHECK-NEXT:    [[SEXT1:%.*]] = zext nneg i32 [[CALL1]] to i64
 ; CHECK-NEXT:    [[SEXT2:%.*]] = zext nneg i32 [[CALL2]] to i64
 ; CHECK-NEXT:    [[SUB:%.*]] = sub nsw i64 [[SEXT1]], [[SEXT2]]
 ; CHECK-NEXT:    ret i64 [[SUB]]
 ;
-  %call1 = call i32 @callee(), !range !0
-  %call2 = call i32 @callee(), !range !0
+  %call1 = call range(i32 0, 2000) i32 @callee()
+  %call2 = call range(i32 0, 2000) i32 @callee()
   %sext1 = zext i32 %call1 to i64
   %sext2 = zext i32 %call2 to i64
   %sub = sub i64 %sext1, %sext2
@@ -598,12 +598,12 @@ define i64 @test17(i32 %V) {
 ; cause overflow.
 define i64 @test18(i32 %V) {
 ; CHECK-LABEL: @test18(
-; CHECK-NEXT:    [[CALL1:%.*]] = call i32 @callee(), !range [[RNG1]]
+; CHECK-NEXT:    [[CALL1:%.*]] = call range(i32 -2000, 0) i32 @callee()
 ; CHECK-NEXT:    [[SEXT1:%.*]] = sext i32 [[CALL1]] to i64
 ; CHECK-NEXT:    [[SUB:%.*]] = sub nsw i64 2147481648, [[SEXT1]]
 ; CHECK-NEXT:    ret i64 [[SUB]]
 ;
-  %call1 = call i32 @callee(), !range !1
+  %call1 = call range(i32 -2000, 0) i32 @callee()
   %sext1 = sext i32 %call1 to i64
   %sub = sub i64 2147481648, %sext1
   ret i64 %sub
@@ -613,18 +613,13 @@ define i64 @test18(i32 %V) {
 ; cause overflow.
 define i64 @test19(i32 %V) {
 ; CHECK-LABEL: @test19(
-; CHECK-NEXT:    [[CALL1:%.*]] = call i32 @callee(), !range [[RNG0]]
+; CHECK-NEXT:    [[CALL1:%.*]] = call range(i32 0, 2000) i32 @callee()
 ; CHECK-NEXT:    [[SEXT1:%.*]] = zext nneg i32 [[CALL1]] to i64
 ; CHECK-NEXT:    [[SUB:%.*]] = sub nuw nsw i64 -2147481648, [[SEXT1]]
 ; CHECK-NEXT:    ret i64 [[SUB]]
 ;
-  %call1 = call i32 @callee(), !range !0
+  %call1 = call range(i32 0, 2000) i32 @callee()
   %sext1 = sext i32 %call1 to i64
   %sub = sub i64 -2147481648, %sext1
   ret i64 %sub
 }
-
-!0 = !{ i32 0, i32 2000 }
-!1 = !{ i32 -2000, i32 0 }
-!2 = !{ i32 -512, i32 -255 }
-!3 = !{ i32 -128, i32 0 }

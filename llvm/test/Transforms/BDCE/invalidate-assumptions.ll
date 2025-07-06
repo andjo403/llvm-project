@@ -129,7 +129,7 @@ define i32 @range(i32 %x) {
 ; CHECK-NEXT:    ret i32 [[AND]]
 ;
   %or = or i32 %x, 1
-  %umin = call i32 @llvm.umin.i32(i32 %or, i32 100), !range !{i32 1, i32 101}
+  %umin = call range(i32 1, 101) i32 @llvm.umin.i32(i32 %or, i32 100)
   %and = and i32 %umin, -2
   ret i32 %and
 }

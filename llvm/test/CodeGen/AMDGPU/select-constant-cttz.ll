@@ -31,7 +31,7 @@ define amdgpu_kernel void @select_constant_cttz(ptr addrspace(1) noalias %out, p
   %v    = load i32, ptr addrspace(1) %arrayidx, align 4
   %sr   = lshr i32 1, %v
   %cmp  = icmp ne i32 %v, 0
-  %cttz = call i32 @llvm.cttz.i32(i32 %sr, i1 true), !range !0
+  %cttz = call range(i32 0, 33) i32 @llvm.cttz.i32(i32 %sr, i1 true)
   %sel  = select i1 %cmp, i32 -1, i32 %cttz
   %ffbh = call i32 @llvm.amdgcn.sffbh.i32(i32 %sel)
   %sub  = sub i32 31, %ffbh
@@ -41,5 +41,3 @@ define amdgpu_kernel void @select_constant_cttz(ptr addrspace(1) noalias %out, p
   store i32 %sel2, ptr addrspace(1) %out
   ret void
 }
-
-!0 = !{i32 0, i32 33}

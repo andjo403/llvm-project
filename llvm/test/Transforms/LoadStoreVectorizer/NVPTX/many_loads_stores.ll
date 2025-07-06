@@ -21,8 +21,8 @@ entry:
   %arg21100 = addrspacecast ptr %arg2 to ptr addrspace(1)
   %arg11098 = addrspacecast ptr %arg1 to ptr addrspace(1)
   %arg01096 = addrspacecast ptr %arg0 to ptr addrspace(1)
-  %0 = tail call i32 @llvm.nvvm.read.ptx.sreg.ctaid.x(), !range !140
-  %1 = tail call i32 @llvm.nvvm.read.ptx.sreg.tid.x(), !range !141
+  %0 = tail call range(i32 0, 8658) i32 @llvm.nvvm.read.ptx.sreg.ctaid.x()
+  %1 = tail call range(i32 0, 64) i32 @llvm.nvvm.read.ptx.sreg.tid.x()
   %2 = shl nuw nsw i32 %0, 6
   %linear_index = or i32 %2, %1
   %linear_index_base = shl nuw nsw i32 %linear_index, 4
@@ -1131,6 +1131,4 @@ entry:
 attributes #0 = { nocallback nofree nosync nounwind speculatable willreturn memory(none) }
 attributes #1 = { mustprogress nofree nosync nounwind willreturn memory(argmem: readwrite) }
 
-!140 = !{i32 0, i32 8658}
-!141 = !{i32 0, i32 64}
 !142 = !{}

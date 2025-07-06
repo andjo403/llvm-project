@@ -20,12 +20,12 @@
 define i16 @or_and_add_and() {
 ; CHECK-LABEL: @or_and_add_and(
 ; CHECK-NEXT:  entry:
-; CHECK-NEXT:    [[X:%.*]] = call i16 @dummy(), !range [[RNG0:![0-9]+]]
+; CHECK-NEXT:    [[X:%.*]] = call range(i16 0, 64) i16 @dummy()
 ; CHECK-NEXT:    [[OR:%.*]] = xor i16 [[X]], 32
 ; CHECK-NEXT:    ret i16 [[OR]]
 ;
 entry:
-  %x = call i16 @dummy(), !range !0
+  %x = call range(i16 0, 64) i16 @dummy()
   %add = add i16 32, %x
   %and1 = and i16 %add, 48
   %and2 = and i16 %x, 15
@@ -34,5 +34,3 @@ entry:
 }
 
 declare i16 @dummy()
-
-!0 = !{i16 0, i16 64}

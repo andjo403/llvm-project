@@ -155,7 +155,7 @@ define void @widen_call_range(ptr noalias %a, ptr readonly %b) {
 ; CHECK-NEXT:    [[IV:%.*]] = phi i64 [ [[BC_RESUME_VAL]], %[[SCALAR_PH]] ], [ [[IV_NEXT:%.*]], %[[LOOP]] ]
 ; CHECK-NEXT:    [[GEP:%.*]] = getelementptr i64, ptr [[B]], i64 [[IV]]
 ; CHECK-NEXT:    [[LOAD:%.*]] = load i64, ptr [[GEP]], align 4, !tbaa [[TBAA0]], !range [[RNG9:![0-9]+]]
-; CHECK-NEXT:    [[CALL:%.*]] = call i64 @foo(i64 [[LOAD]]) #[[ATTR1:[0-9]+]], !range [[RNG9]]
+; CHECK-NEXT:    [[CALL:%.*]] = call range(i64 0, 2) i64 @foo(i64 [[LOAD]]) #[[ATTR1:[0-9]+]]
 ; CHECK-NEXT:    [[ARRAYIDX:%.*]] = getelementptr inbounds i64, ptr [[A]], i64 [[IV]]
 ; CHECK-NEXT:    store i64 [[CALL]], ptr [[ARRAYIDX]], align 4
 ; CHECK-NEXT:    [[IV_NEXT]] = add nuw nsw i64 [[IV]], 1
@@ -196,7 +196,7 @@ define void @widen_call_range(ptr noalias %a, ptr readonly %b) {
 ; INTERLEAVE-NEXT:    [[IV:%.*]] = phi i64 [ [[BC_RESUME_VAL]], %[[SCALAR_PH]] ], [ [[IV_NEXT:%.*]], %[[LOOP]] ]
 ; INTERLEAVE-NEXT:    [[GEP:%.*]] = getelementptr i64, ptr [[B]], i64 [[IV]]
 ; INTERLEAVE-NEXT:    [[LOAD:%.*]] = load i64, ptr [[GEP]], align 4, !tbaa [[TBAA0]], !range [[RNG9:![0-9]+]]
-; INTERLEAVE-NEXT:    [[CALL:%.*]] = call i64 @foo(i64 [[LOAD]]) #[[ATTR1:[0-9]+]], !range [[RNG9]]
+; INTERLEAVE-NEXT:    [[CALL:%.*]] = call range(i64 0, 2) i64 @foo(i64 [[LOAD]]) #[[ATTR1:[0-9]+]]
 ; INTERLEAVE-NEXT:    [[ARRAYIDX:%.*]] = getelementptr inbounds i64, ptr [[A]], i64 [[IV]]
 ; INTERLEAVE-NEXT:    store i64 [[CALL]], ptr [[ARRAYIDX]], align 4
 ; INTERLEAVE-NEXT:    [[IV_NEXT]] = add nuw nsw i64 [[IV]], 1
@@ -212,7 +212,7 @@ loop:
   %iv = phi i64 [ 0, %entry ], [ %iv.next, %loop ]
   %gep = getelementptr i64, ptr %b, i64 %iv
   %load = load i64, ptr %gep, !range !1, !tbaa !3
-  %call = call i64 @foo(i64 %load) #0, !range !1
+  %call = call range(i64 0, 2) i64 @foo(i64 %load) #0
   %arrayidx = getelementptr inbounds i64, ptr %a, i64 %iv
   store i64 %call, ptr %arrayidx
   %iv.next = add nuw nsw i64 %iv, 1
@@ -347,7 +347,7 @@ define void @widen_intrinsic(ptr noalias %a, ptr readonly %b) {
 ; CHECK-NEXT:    [[IV:%.*]] = phi i64 [ [[BC_RESUME_VAL]], %[[SCALAR_PH]] ], [ [[IV_NEXT:%.*]], %[[LOOP]] ]
 ; CHECK-NEXT:    [[GEP:%.*]] = getelementptr i64, ptr [[B]], i64 [[IV]]
 ; CHECK-NEXT:    [[LOAD:%.*]] = load i64, ptr [[GEP]], align 4
-; CHECK-NEXT:    [[CALL:%.*]] = call i64 @llvm.abs.i64(i64 [[LOAD]], i1 true), !range [[RNG9]]
+; CHECK-NEXT:    [[CALL:%.*]] = call range(i64 0, 2) i64 @llvm.abs.i64(i64 [[LOAD]], i1 true)
 ; CHECK-NEXT:    [[ARRAYIDX:%.*]] = getelementptr inbounds i64, ptr [[A]], i64 [[IV]]
 ; CHECK-NEXT:    store i64 [[CALL]], ptr [[ARRAYIDX]], align 4
 ; CHECK-NEXT:    [[IV_NEXT]] = add nuw nsw i64 [[IV]], 1
@@ -388,7 +388,7 @@ define void @widen_intrinsic(ptr noalias %a, ptr readonly %b) {
 ; INTERLEAVE-NEXT:    [[IV:%.*]] = phi i64 [ [[BC_RESUME_VAL]], %[[SCALAR_PH]] ], [ [[IV_NEXT:%.*]], %[[LOOP]] ]
 ; INTERLEAVE-NEXT:    [[GEP:%.*]] = getelementptr i64, ptr [[B]], i64 [[IV]]
 ; INTERLEAVE-NEXT:    [[LOAD:%.*]] = load i64, ptr [[GEP]], align 4
-; INTERLEAVE-NEXT:    [[CALL:%.*]] = call i64 @llvm.abs.i64(i64 [[LOAD]], i1 true), !range [[RNG9]]
+; INTERLEAVE-NEXT:    [[CALL:%.*]] = call range(i64 0, 2) i64 @llvm.abs.i64(i64 [[LOAD]], i1 true)
 ; INTERLEAVE-NEXT:    [[ARRAYIDX:%.*]] = getelementptr inbounds i64, ptr [[A]], i64 [[IV]]
 ; INTERLEAVE-NEXT:    store i64 [[CALL]], ptr [[ARRAYIDX]], align 4
 ; INTERLEAVE-NEXT:    [[IV_NEXT]] = add nuw nsw i64 [[IV]], 1
@@ -404,7 +404,7 @@ loop:
   %iv = phi i64 [ 0, %entry ], [ %iv.next, %loop ]
   %gep = getelementptr i64, ptr %b, i64 %iv
   %load = load i64, ptr %gep
-  %call = call i64 @llvm.abs.i64(i64 %load, i1 true), !range !1
+  %call = call range(i64 0, 2) i64 @llvm.abs.i64(i64 %load, i1 true)
   %arrayidx = getelementptr inbounds i64, ptr %a, i64 %iv
   store i64 %call, ptr %arrayidx
   %iv.next = add nuw nsw i64 %iv, 1

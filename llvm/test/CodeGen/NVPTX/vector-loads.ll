@@ -173,7 +173,7 @@ define void @foo_complex(ptr nocapture readonly align 16 dereferenceable(1342177
 ; CHECK-NEXT:    max.u16 %rs3, %rs1, %rs2;
 ; CHECK-NEXT:    st.b8 [%rd5+129], %rs3;
 ; CHECK-NEXT:    ret;
-  %t0 = tail call i32 @llvm.nvvm.read.ptx.sreg.tid.x(), !range !1
+  %t0 = tail call range(i32 0, 64) i32 @llvm.nvvm.read.ptx.sreg.tid.x()
   %t1 = tail call i32 @llvm.nvvm.read.ptx.sreg.ctaid.x()
   %t2 = lshr i32 %t1, 8
   %t3 = shl nuw nsw i32 %t1, 9
@@ -322,9 +322,6 @@ define void @extv8f16_generic_a4(ptr noalias readonly align 16 %dst, ptr noalias
   store <8 x float> %ext, ptr %dst, align 16
   ret void
 }
-
-
-!1 = !{i32 0, i32 64}
 
 define dso_local void @bf16_v4_align_load_store(ptr noundef %0, ptr noundef %1) #0 {
 ; CHECK-LABEL: bf16_v4_align_load_store(

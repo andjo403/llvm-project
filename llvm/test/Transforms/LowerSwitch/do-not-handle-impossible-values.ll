@@ -57,7 +57,7 @@ exit:
 define i32 @test2() {
 ; CHECK-LABEL: @test2(
 ; CHECK-NEXT:  entry:
-; CHECK-NEXT:    [[VAL:%.*]] = call i32 @getVal(), !range [[RNG0:![0-9]+]]
+; CHECK-NEXT:    [[VAL:%.*]] = call range(i32 1, 257) i32 @getVal()
 ; CHECK-NEXT:    br label [[NODEBLOCK:%.*]]
 ; CHECK:       NodeBlock:
 ; CHECK-NEXT:    [[PIVOT:%.*]] = icmp slt i32 [[VAL]], 2
@@ -79,7 +79,7 @@ define i32 @test2() {
 ; CHECK-NEXT:    ret i32 [[RES]]
 ;
 entry:
-  %val = call i32 @getVal(), !range !0
+  %val = call range(i32 1, 257) i32 @getVal()
   switch i32 %val, label %case.D [
   i32 1, label %case.1
   i32 2, label %case.2
@@ -109,7 +109,7 @@ exit:
 define i32 @test3() {
 ; CHECK-LABEL: @test3(
 ; CHECK-NEXT:  entry:
-; CHECK-NEXT:    [[VAL:%.*]] = call i32 @getVal(), !range [[RNG1:![0-9]+]]
+; CHECK-NEXT:    [[VAL:%.*]] = call range(i32 2, 3) i32 @getVal()
 ; CHECK-NEXT:    br label [[LEAFBLOCK:%.*]]
 ; CHECK:       LeafBlock:
 ; CHECK-NEXT:    [[SWITCHLEAF:%.*]] = icmp eq i32 [[VAL]], 2
@@ -125,7 +125,7 @@ define i32 @test3() {
 ; CHECK-NEXT:    ret i32 [[RES]]
 ;
 entry:
-  %val = call i32 @getVal(), !range !1
+  %val = call range(i32 2, 3) i32 @getVal()
   switch i32 %val, label %case.D [
   i32 1, label %case.1
   i32 2, label %case.2
@@ -156,7 +156,7 @@ exit:
 define i32 @test4() {
 ; CHECK-LABEL: @test4(
 ; CHECK-NEXT:  entry:
-; CHECK-NEXT:    [[VAL:%.*]] = call i32 @getVal(), !range [[RNG2:![0-9]+]]
+; CHECK-NEXT:    [[VAL:%.*]] = call range(i32 2, 257) i32 @getVal()
 ; CHECK-NEXT:    br label [[NODEBLOCK:%.*]]
 ; CHECK:       NodeBlock:
 ; CHECK-NEXT:    [[PIVOT:%.*]] = icmp slt i32 [[VAL]], 2
@@ -178,7 +178,7 @@ define i32 @test4() {
 ; CHECK-NEXT:    ret i32 [[RES]]
 ;
 entry:
-  %val = call i32 @getVal(), !range !2
+  %val = call range(i32 2, 257) i32 @getVal()
   switch i32 %val, label %case.D [
   i32 1, label %case.1
   i32 2, label %case.2
@@ -211,7 +211,7 @@ define i32 @test5(i1 %cond) {
 ; CHECK-NEXT:  entry:
 ; CHECK-NEXT:    br i1 [[COND:%.*]], label [[SWITCH:%.*]], label [[CASE_D:%.*]]
 ; CHECK:       switch:
-; CHECK-NEXT:    [[VAL:%.*]] = call i32 @getVal(), !range [[RNG1]]
+; CHECK-NEXT:    [[VAL:%.*]] = call range(i32 2, 3) i32 @getVal()
 ; CHECK-NEXT:    br label [[NODEBLOCK:%.*]]
 ; CHECK:       NodeBlock:
 ; CHECK-NEXT:    [[PIVOT:%.*]] = icmp slt i32 [[VAL]], 3
@@ -235,7 +235,7 @@ entry:
   br i1 %cond, label %switch, label %case.D
 
 switch:
-  %val = call i32 @getVal(), !range !1
+  %val = call range(i32 2, 3) i32 @getVal()
   switch i32 %val, label %case.D [
   i32 1, label %case.1
   i32 2, label %case.D
@@ -267,7 +267,7 @@ define i32 @test6(i1 %cond) {
 ; CHECK-NEXT:  entry:
 ; CHECK-NEXT:    br i1 [[COND:%.*]], label [[SWITCH:%.*]], label [[CASE_D:%.*]]
 ; CHECK:       switch:
-; CHECK-NEXT:    [[VAL:%.*]] = call i32 @getVal(), !range [[RNG1]]
+; CHECK-NEXT:    [[VAL:%.*]] = call range(i32 2, 3) i32 @getVal()
 ; CHECK-NEXT:    br label [[LEAFBLOCK:%.*]]
 ; CHECK:       LeafBlock:
 ; CHECK-NEXT:    [[SWITCHLEAF:%.*]] = icmp eq i32 [[VAL]], 2
@@ -290,7 +290,7 @@ entry:
   br i1 %cond, label %switch, label %case.D
 
 switch:
-  %val = call i32 @getVal(), !range !1
+  %val = call range(i32 2, 3) i32 @getVal()
   switch i32 %val, label %case.D [
   i32 1, label %case.1
   i32 2, label %case.2
@@ -324,7 +324,7 @@ define i32 @test7(i1 %cond) {
 ; CHECK-NEXT:  entry:
 ; CHECK-NEXT:    br i1 [[COND:%.*]], label [[SWITCH:%.*]], label [[CASE_D:%.*]]
 ; CHECK:       switch:
-; CHECK-NEXT:    [[VAL:%.*]] = call i32 @getVal(), !range [[RNG1]]
+; CHECK-NEXT:    [[VAL:%.*]] = call range(i32 2, 3) i32 @getVal()
 ; CHECK-NEXT:    br label [[CASE_D]]
 ; CHECK:       case.D:
 ; CHECK-NEXT:    [[DELTA:%.*]] = phi i32 [ 0, [[ENTRY:%.*]] ], [ 20, [[SWITCH]] ]
@@ -338,7 +338,7 @@ entry:
   br i1 %cond, label %switch, label %case.D
 
 switch:
-  %val = call i32 @getVal(), !range !1
+  %val = call range(i32 2, 3) i32 @getVal()
   switch i32 %val, label %case.D [
   i32 2, label %case.D
   ]
@@ -366,7 +366,7 @@ define i32 @test8(i1 %cond) {
 ; CHECK-NEXT:  entry:
 ; CHECK-NEXT:    br i1 [[COND:%.*]], label [[SWITCH:%.*]], label [[CASE_D:%.*]]
 ; CHECK:       switch:
-; CHECK-NEXT:    [[VAL:%.*]] = call i32 @getVal(), !range [[RNG3:![0-9]+]]
+; CHECK-NEXT:    [[VAL:%.*]] = call range(i32 1, 3) i32 @getVal()
 ; CHECK-NEXT:    br label [[LEAFBLOCK:%.*]]
 ; CHECK:       LeafBlock:
 ; CHECK-NEXT:    [[SWITCHLEAF:%.*]] = icmp eq i32 [[VAL]], 2
@@ -389,7 +389,7 @@ entry:
   br i1 %cond, label %switch, label %case.D
 
 switch:
-  %val = call i32 @getVal(), !range !3
+  %val = call range(i32 1, 3) i32 @getVal()
   switch i32 %val, label %case.D [
   i32 1, label %case.1
   i32 2, label %case.2
@@ -694,7 +694,7 @@ bb38:
 define i32 @test14() {
 ; CHECK-LABEL: @test14(
 ; CHECK-NEXT:  entry:
-; CHECK-NEXT:    [[TMP:%.*]] = call i32 @getVal(), !range [[RNG4:![0-9]+]]
+; CHECK-NEXT:    [[TMP:%.*]] = call range(i32 0, 4) i32 @getVal()
 ; CHECK-NEXT:    [[VAL:%.*]] = call i32 @llvm.ctpop.i32(i32 [[TMP]])
 ; CHECK-NEXT:    br label [[NODEBLOCK:%.*]]
 ; CHECK:       NodeBlock:
@@ -717,7 +717,7 @@ define i32 @test14() {
 ; CHECK-NEXT:    ret i32 [[RES]]
 ;
 entry:
-  %tmp = call i32 @getVal(), !range !4
+  %tmp = call range(i32 0, 4) i32 @getVal()
   %val = call i32 @llvm.ctpop.i32(i32 %tmp)
   switch i32 %val, label %case.D [
   i32 0, label %case.1
@@ -855,9 +855,3 @@ declare i32 @case2()
 declare i32 @caseD()
 declare i32 @getVal()
 declare i32 @llvm.ctpop.i32(i32)
-
-!0 = !{i32 1, i32 257}
-!1 = !{i32 2, i32 3}
-!2 = !{i32 2, i32 257}
-!3 = !{i32 1, i32 3}
-!4 = !{i32 0, i32 4}

@@ -221,7 +221,7 @@ define internal noundef range(i32 -1, 1024) i32 @__kmpc_target_init(ptr nofree n
   br label %37
 
 21:                                               ; preds = %2
-  %22 = tail call range(i32 1, 1025) i32 @llvm.nvvm.read.ptx.sreg.ntid.x(), !range !82
+  %22 = tail call range(i32 1, 1025) i32 @llvm.nvvm.read.ptx.sreg.ntid.x()
   %23 = add nsw i32 %22, -1
   %24 = and i32 %23, -32
   %25 = tail call range(i32 0, 1024) i32 @llvm.nvvm.read.ptx.sreg.tid.x()
@@ -395,10 +395,10 @@ define internal noundef range(i32 -1, 1024) i32 @__kmpc_target_init(ptr nofree n
   br label %130
 
 100:                                              ; preds = %37
-  %101 = tail call range(i32 1, 1025) i32 @llvm.nvvm.read.ptx.sreg.ntid.x(), !range !82
+  %101 = tail call range(i32 1, 1025) i32 @llvm.nvvm.read.ptx.sreg.ntid.x()
   %102 = add nsw i32 %101, -1
   %103 = and i32 %102, -32
-  %104 = tail call range(i32 0, 1024) i32 @llvm.nvvm.read.ptx.sreg.tid.x(), !range !92
+  %104 = tail call range(i32 0, 1024) i32 @llvm.nvvm.read.ptx.sreg.tid.x()
   %105 = icmp eq i32 %104, %103
   br i1 %105, label %130, label %106
 
@@ -508,10 +508,10 @@ define internal noundef zeroext i1 @__kmpc_kernel_parallel(ptr nocapture nofree 
   br i1 %3, label %15, label %4
 
 4:                                                ; preds = %1
-  %5 = tail call noundef range(i32 0, 1024) i32 @llvm.nvvm.read.ptx.sreg.tid.x() #27, !range !92
+  %5 = tail call noundef range(i32 0, 1024) i32 @llvm.nvvm.read.ptx.sreg.tid.x() #27
   %6 = load i32, ptr addrspace(3) addrspacecast (ptr getelementptr inbounds nuw (i8, ptr addrspacecast (ptr addrspace(3) @_ZN4ompx5state9TeamStateE to ptr), i64 28) to ptr addrspace(3)), align 4, !tbaa !62
   %7 = icmp eq i32 %6, 0
-  %8 = tail call range(i32 1, 1025) i32 @llvm.nvvm.read.ptx.sreg.ntid.x(), !range !82
+  %8 = tail call range(i32 1, 1025) i32 @llvm.nvvm.read.ptx.sreg.ntid.x()
   %9 = load i32, ptr addrspace(3) @IsSPMDMode, align 4
   %10 = icmp eq i32 %9, 0
   %11 = select i1 %10, i32 -32, i32 0
@@ -552,7 +552,7 @@ define internal void @__kmpc_kernel_end_parallel() local_unnamed_addr #13 {
   br i1 %16, label %17, label %30
 
 17:                                               ; preds = %10
-  %18 = tail call noundef range(i32 0, 1024) i32 @llvm.nvvm.read.ptx.sreg.tid.x() #27, !range !92
+  %18 = tail call noundef range(i32 0, 1024) i32 @llvm.nvvm.read.ptx.sreg.tid.x() #27
   %19 = load ptr, ptr addrspace(3) @_ZN4ompx5state12ThreadStatesE, align 8, !tbaa !74
   %20 = zext nneg i32 %18 to i64
   %21 = getelementptr inbounds nuw ptr, ptr %19, i64 %20
@@ -623,10 +623,10 @@ define internal void @__kmpc_target_deinit() #4 {
   br i1 %3, label %4, label %27
 
 4:                                                ; preds = %0
-  %5 = tail call range(i32 1, 1025) i32 @llvm.nvvm.read.ptx.sreg.ntid.x(), !range !82
+  %5 = tail call range(i32 1, 1025) i32 @llvm.nvvm.read.ptx.sreg.ntid.x()
   %6 = add nsw i32 %5, -1
   %7 = and i32 %6, -32
-  %8 = tail call range(i32 0, 1024) i32 @llvm.nvvm.read.ptx.sreg.tid.x(), !range !92
+  %8 = tail call range(i32 0, 1024) i32 @llvm.nvvm.read.ptx.sreg.tid.x()
   %9 = icmp eq i32 %8, %7
   br i1 %9, label %10, label %11
 
@@ -786,7 +786,6 @@ attributes #29 = { nofree nounwind willreturn }
 !79 = !{!"p1 _ZTS25KernelLaunchEnvironmentTy", !68, i64 0}
 !80 = !{!81, !81, i64 0}
 !81 = !{!"p2 _ZTS22DynamicScheduleTracker", !68, i64 0}
-!82 = !{i32 1, i32 1025}
 !83 = !{!84, !60, i64 0}
 !84 = !{!"_ZTS19DeviceEnvironmentTy", !60, i64 0, !60, i64 4, !60, i64 8, !60, i64 12, !85, i64 16, !85, i64 24, !85, i64 32, !85, i64 40}
 !85 = !{!"long", !57, i64 0}
@@ -796,7 +795,6 @@ attributes #29 = { nofree nounwind willreturn }
 !89 = !{!66, !60, i64 16}
 !90 = !{!66, !60, i64 20}
 !91 = !{!66, !60, i64 24}
-!92 = !{i32 0, i32 1024}
 !93 = !{!67, !67, i64 0}
 !94 = distinct !{!94, !95}
 !95 = !{!"llvm.loop.mustprogress"}

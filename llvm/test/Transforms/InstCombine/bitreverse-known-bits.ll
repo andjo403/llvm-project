@@ -51,8 +51,7 @@ define i8 @add_bitreverse(i8 %a) {
 ; CHECK-NEXT:    ret i8 [[C]]
 ;
   %b = and i8 %a, 252
-  %reverse = call i8 @llvm.bitreverse.i8(i8 %b), !range !1
+  %reverse = call range(i8 0, 16) i8 @llvm.bitreverse.i8(i8 %b)
   %c = add i8 %reverse, -16
   ret i8 %c
 }
-!1 = !{i8 0, i8 16}

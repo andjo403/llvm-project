@@ -142,17 +142,6 @@ define <2 x i32> @neg_shl_amount_is_known_bogus_range_call_vec(<2 x i32> %a) {
   ret <2 x i32> %shl
 }
 
-define i32 @shl_amount_is_not_known_bogus_range_call_and_range_metadata(i32 %a) {
-; CHECK-LABEL: @shl_amount_is_not_known_bogus_range_call_and_range_metadata(
-; CHECK-NEXT:    [[B:%.*]] = call range(i32 0, 32) i32 @returns_i32_helper(), !range [[RNG0:![0-9]+]]
-; CHECK-NEXT:    [[SHL:%.*]] = shl i32 [[A:%.*]], [[B]]
-; CHECK-NEXT:    ret i32 [[SHL]]
-;
-  %b = call range(i32 0, 32) i32 @returns_i32_helper(), !range !{ i32 32, i32 64 }
-  %shl = shl i32 %a, %b
-  ret i32 %shl
-}
-
 ; Check some weird types and the other shift ops.
 
 define i31 @lshr_amount_is_known_bogus(i31 %a, i31 %b) {

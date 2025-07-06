@@ -4,7 +4,7 @@
 define amdgpu_kernel void @divrem24_assume(ptr addrspace(1) %arg, i32 %arg1) {
 ; CHECK-LABEL: @divrem24_assume(
 ; CHECK-NEXT:  bb:
-; CHECK-NEXT:    [[TMP:%.*]] = tail call i32 @llvm.amdgcn.workitem.id.x(), !range !0
+; CHECK-NEXT:    [[TMP:%.*]] = tail call range(i32 0, 1024) i32 @llvm.amdgcn.workitem.id.x()
 ; CHECK-NEXT:    [[TMP2:%.*]] = icmp ult i32 [[ARG1:%.*]], 42
 ; CHECK-NEXT:    tail call void @llvm.assume(i1 [[TMP2]])
 ; CHECK-NEXT:    [[TMP0:%.*]] = uitofp i32 [[TMP]] to float
@@ -27,7 +27,7 @@ define amdgpu_kernel void @divrem24_assume(ptr addrspace(1) %arg, i32 %arg1) {
 ; CHECK-NEXT:    ret void
 ;
 bb:
-  %tmp = tail call i32 @llvm.amdgcn.workitem.id.x(), !range !0
+  %tmp = tail call range(i32 0, 1024) i32 @llvm.amdgcn.workitem.id.x()
   %tmp2 = icmp ult i32 %arg1, 42
   tail call void @llvm.assume(i1 %tmp2)
   %tmp3 = udiv i32 %tmp, %arg1
@@ -39,5 +39,3 @@ bb:
 
 declare void @llvm.assume(i1)
 declare i32 @llvm.amdgcn.workitem.id.x()
-
-!0 = !{i32 0, i32 1024}

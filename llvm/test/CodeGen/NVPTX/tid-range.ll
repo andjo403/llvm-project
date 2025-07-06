@@ -17,11 +17,9 @@ define i1 @test1() {
 ; CHECK-NEXT:    st.param.b32 [func_retval0], %r2;
 ; CHECK-NEXT:    ret;
 entry:
-  %call = call i32 @llvm.nvvm.read.ptx.sreg.tid.x(), !range !0
+  %call = call range(i32 0, 3) i32 @llvm.nvvm.read.ptx.sreg.tid.x()
   %cmp = icmp eq i32 %call, 1
   ret i1 %cmp
 }
 
 declare i32 @llvm.nvvm.read.ptx.sreg.tid.x()
-
-!0 = !{ i32 0, i32 3 }
