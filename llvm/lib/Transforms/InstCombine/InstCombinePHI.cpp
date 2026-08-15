@@ -1399,6 +1399,126 @@ static Value *foldDependentIVs(PHINode &PN, IRBuilderBase &Builder) {
   return Res;
 }
 
+Instruction *InstCombinerImpl::foldPHItoIncomingInstuction(PHINode &PN) {
+  // We cannot create a new instruction after the PHI if the terminator is an
+  // EHPad because there is no valid insertion point.
+  if (Instruction *TI = PN.getParent()->getTerminator())
+    if (TI->isEHPad())
+      return nullptr;
+
+  Instruction *Inst = nullptr;
+  for (Value *Incoming : PN.incoming_values()) {
+    if (isa<ConstantInt>(Incoming))
+      continue;
+    auto *IncomingInst = dyn_cast<Instruction>(Incoming);
+    if (!IncomingInst || (Inst && Inst != IncomingInst)) {
+      return nullptr;
+    }
+
+    Inst = IncomingInst;
+  }
+
+  if (!Inst)
+    return nullptr;
+
+  SmallPtrSet<Instruction *, 8> AllDropFlags;
+  for (unsigned int I = 0; I < PN.getNumIncomingValues(); I++) {
+
+    Value *V = PN.getIncomingValue(I);
+    if (V == Inst) {
+      continue;
+    }
+
+    BasicBlock *BB = PN.getIncomingBlock(I);
+
+    Instruction *Terminator = BB->getTerminator();
+    BasicBlock *EdgeTarget = nullptr;
+    if (isa<CondBrInst, SwitchInst>(Terminator)) {
+      EdgeTarget = PN.getParent();
+    } else if (BasicBlock *Pred = BB->getSinglePredecessor()) {
+      Terminator = Pred->getTerminator();
+      EdgeTarget = BB;
+    }
+
+    if (auto *SI = dyn_cast<SwitchInst>(Terminator)) {
+      if (!SI || SI->getDefaultDest() == EdgeTarget)
+        return nullptr;
+
+      for (auto &Case : SI->cases()) {
+        if (Case.getCaseSuccessor() != EdgeTarget)
+          continue;
+
+        SmallVector<Instruction *> DropFlags;
+        if (simplifyWithOpReplaced(
+                Inst, SI->getCondition(), Case.getCaseValue(), SQ,
+                /* AllowRefinement */ false, &DropFlags) != V)
+          return nullptr;
+        AllDropFlags.insert_range(DropFlags);
+        break;
+      }
+      continue;
+    }
+    if (auto *BI = dyn_cast<CondBrInst>(Terminator)) {
+      BasicBlock *TrueBB = BI->getSuccessor(0);
+      BasicBlock *FalseBB = BI->getSuccessor(1);
+      if (TrueBB == FalseBB)
+        return nullptr;
+
+      CmpPredicate Pred;
+      Value *LHS, *RHS;
+      if (!match(BI->getCondition(),
+                 m_ICmpLike(Pred, m_Value(LHS), m_Value(RHS))) ||
+          !CmpInst::isEquality(Pred))
+        return nullptr;
+      if (Pred == CmpInst::ICMP_NE)
+        std::swap(TrueBB, FalseBB);
+
+      if (BI->getSuccessor(1) == EdgeTarget)
+        return nullptr;
+
+      SmallVector<Instruction *> DropFlags;
+      if (simplifyWithOpReplaced(Inst, LHS, RHS, SQ,
+                                 /* AllowRefinement */ false,
+                                 &DropFlags) == V) {
+        AllDropFlags.insert_range(DropFlags);
+        continue;
+      }
+      DropFlags.clear();
+      if (simplifyWithOpReplaced(Inst, RHS, LHS, SQ,
+                                 /* AllowRefinement */ false,
+                                 &DropFlags) == V) {
+        AllDropFlags.insert_range(DropFlags);
+        continue;
+      }
+      return nullptr;
+    }
+    return nullptr;
+  }
+
+  if (DT.dominates(Inst, &PN)) {
+    for (Instruction *I : AllDropFlags) {
+      I->dropPoisonGeneratingAnnotations();
+      Worklist.add(I);
+    }
+    return Inst;
+  }
+
+  if (!all_of(Inst->operands(), [&](Value *Operand) {
+        return isa<Argument, Constant, Instruction>(Operand) &&
+               DT.dominates(Operand, &PN);
+      }))
+    return nullptr;
+
+  for (Instruction *I : AllDropFlags) {
+    I->dropPoisonGeneratingAnnotations();
+    Worklist.add(I);
+  }
+  Instruction *Copy = Inst->clone();
+  Copy->insertBefore(PN.getParent()->getFirstInsertionPt());
+
+  return Copy;
+}
+
 // PHINode simplification
 //
 Instruction *InstCombinerImpl::visitPHINode(PHINode &PN) {
@@ -1595,6 +1715,9 @@ Instruction *InstCombinerImpl::visitPHINode(PHINode &PN) {
     ++NumPHICSEs;
     return replaceInstUsesWith(PN, &IdenticalPN);
   }
+
+  if (auto *V = foldPHItoIncomingInstuction(PN))
+    return replaceInstUsesWith(PN, V);
 
   // If this is an integer PHI and we know that it has an illegal type, see if
   // it is only used by trunc or trunc(lshr) operations.  If so, we split the
