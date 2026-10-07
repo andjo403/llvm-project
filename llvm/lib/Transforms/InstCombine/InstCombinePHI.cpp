@@ -1394,6 +1394,73 @@ static Value *foldDependentIVs(PHINode &PN, IRBuilderBase &Builder) {
   return Res;
 }
 
+Instruction *InstCombinerImpl::foldPHItoIncomingInstuction(PHINode &PN) {
+  Instruction *Inst = nullptr;
+  for (Value *Incoming : PN.incoming_values()) {
+    if (isa<Constant>(Incoming))
+      continue;
+    auto *IncomingInst = dyn_cast<Instruction>(Incoming);
+    if (!IncomingInst || (Inst && Inst != IncomingInst)) {
+      return nullptr;
+    }
+
+    Inst = IncomingInst;
+  }
+
+  if (!Inst)
+    return nullptr;
+
+  if (!DT.dominates(Inst, &PN))
+    return nullptr;
+
+  for (unsigned int I = 0; I < PN.getNumIncomingValues(); I++) {
+
+    Value *Incoming = PN.getIncomingValue(I);
+    if (Incoming == Inst) {
+      continue;
+    }
+
+    BasicBlock *BB = PN.getIncomingBlock(I);
+    Instruction *Terminator = BB->getTerminator();
+    BasicBlock *EdgeTarget = nullptr;
+    if (isa<CondBrInst>(Terminator)) {
+      EdgeTarget = PN.getParent();
+    } else if (BasicBlock *Pred = BB->getSinglePredecessor()) {
+      Terminator = Pred->getTerminator();
+      EdgeTarget = BB;
+    }
+
+    if (auto *BI = dyn_cast<CondBrInst>(Terminator)) {
+      BasicBlock *TrueBB = BI->getSuccessor(0);
+      BasicBlock *FalseBB = BI->getSuccessor(1);
+      if (TrueBB == FalseBB)
+        return nullptr;
+
+      CmpPredicate Pred;
+      Value *LHS, *RHS;
+      if (!match(BI->getCondition(),
+                 m_ICmpLike(Pred, m_Value(LHS), m_Value(RHS))) ||
+          !CmpInst::isEquality(Pred))
+        return nullptr;
+      if (Pred == CmpInst::ICMP_NE)
+        std::swap(TrueBB, FalseBB);
+
+      if (FalseBB == EdgeTarget)
+        return nullptr;
+
+      if (simplifyWithOpReplaced(Inst, LHS, RHS, SQ,
+                                 /* AllowRefinement */ false) == Incoming ||
+          simplifyWithOpReplaced(Inst, RHS, LHS, SQ,
+                                 /* AllowRefinement */ false) == Incoming)
+        continue;
+
+      return nullptr;
+    }
+    return nullptr;
+  }
+  return Inst;
+}
+
 // PHINode simplification
 //
 Instruction *InstCombinerImpl::visitPHINode(PHINode &PN) {
@@ -1590,6 +1657,9 @@ Instruction *InstCombinerImpl::visitPHINode(PHINode &PN) {
     ++NumPHICSEs;
     return replaceInstUsesWith(PN, &IdenticalPN);
   }
+
+  if (auto *V = foldPHItoIncomingInstuction(PN))
+    return replaceInstUsesWith(PN, V);
 
   // If this is an integer PHI and we know that it has an illegal type, see if
   // it is only used by trunc or trunc(lshr) operations.  If so, we split the
