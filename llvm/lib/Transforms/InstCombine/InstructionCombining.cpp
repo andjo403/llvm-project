@@ -1852,13 +1852,15 @@ static Value *simplifyInstructionWithPHI(Instruction &I, PHINode *PN,
   // Check if incoming PHI value can be replaced with constant
   // based on implied condition.
   CondBrInst *TerminatorBI = dyn_cast<CondBrInst>(InBB->getTerminator());
-  const ICmpInst *ICmp = dyn_cast<ICmpInst>(&I);
+  CmpPredicate Pred;
+  Value *RHS;
   if (TerminatorBI &&
-      TerminatorBI->getSuccessor(0) != TerminatorBI->getSuccessor(1) && ICmp) {
+      TerminatorBI->getSuccessor(0) != TerminatorBI->getSuccessor(1) &&
+      match(&I, m_ICmpLike(Pred, m_Value(), m_Value(RHS)))) {
     bool LHSIsTrue = TerminatorBI->getSuccessor(0) == PN->getParent();
-    std::optional<bool> ImpliedCond = isImpliedCondition(
-        TerminatorBI->getCondition(), ICmp->getCmpPredicate(), Ops[0], Ops[1],
-        DL, LHSIsTrue);
+    std::optional<bool> ImpliedCond =
+        isImpliedCondition(TerminatorBI->getCondition(), Pred, Ops[0],
+                           isa<ICmpInst>(I) ? Ops[1] : RHS, DL, LHSIsTrue);
     if (ImpliedCond)
       return ConstantInt::getBool(I.getType(), ImpliedCond.value());
   }
