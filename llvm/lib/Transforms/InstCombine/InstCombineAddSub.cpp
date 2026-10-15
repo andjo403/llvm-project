@@ -3121,6 +3121,13 @@ Instruction *InstCombinerImpl::visitSub(BinaryOperator &I) {
     return BinaryOperator::CreateAnd(Op1, ConstantInt::get(Ty, *AddC));
   }
 
+  // zext X -nuw zext Y -> zext (X -nuw Y)
+  if (match(Op0, m_OneUse(m_ZExt(m_Value(X)))) &&
+      match(Op1, m_OneUse(m_ZExt(m_Value(Y)))) &&
+      (Op0->hasOneUse() || Op1->hasOneUse()) && X->getType() == Y->getType() &&
+      I.hasNoUnsignedWrap())
+    return new ZExtInst(Builder.CreateNUWSub(X, Y), I.getType());
+
   return TryToNarrowDeduceFlags();
 }
 

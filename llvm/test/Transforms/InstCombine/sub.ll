@@ -1781,10 +1781,9 @@ define i32 @nuw_const_zext_big(i8 %y) {
 
 define i32 @nuw_zext_zext(i8 %x, i8 %y) {
 ; CHECK-LABEL: @nuw_zext_zext(
-; CHECK-NEXT:    [[ZX:%.*]] = zext i8 [[X:%.*]] to i32
-; CHECK-NEXT:    [[ZY:%.*]] = zext i8 [[Y:%.*]] to i32
-; CHECK-NEXT:    [[S:%.*]] = sub nuw nsw i32 [[ZX]], [[ZY]]
-; CHECK-NEXT:    ret i32 [[S]]
+; CHECK-NEXT:    [[Y:%.*]] = sub nuw i8 [[X:%.*]], [[Y1:%.*]]
+; CHECK-NEXT:    [[ZY:%.*]] = zext i8 [[Y]] to i32
+; CHECK-NEXT:    ret i32 [[ZY]]
 ;
   %zx = zext i8 %x to i32
   %zy = zext i8 %y to i32
