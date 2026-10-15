@@ -2876,6 +2876,12 @@ Instruction *InstCombinerImpl::visitSub(BinaryOperator &I) {
       (Op1->hasOneUse() || isa<Constant>(Y)))
     return BinaryOperator::CreateAnd(
         Op0, Builder.CreateNot(Y, Y->getName() + ".not"));
+  // (zext X - zext (X & Y)) -> zext (X & ~Y)
+  if (match(Op0, m_OneUse(m_ZExt(m_Value(X)))) &&
+      match(Op1, m_OneUse(m_ZExt(m_c_And(m_Specific(X), m_Value(Y))))))
+    return new ZExtInst(
+        Builder.CreateAnd(X, Builder.CreateNot(Y, Y->getName() + ".not")),
+        I.getType());
 
   // ~X - Min/Max(~X, Y) -> ~Min/Max(X, ~Y) - X
   // ~X - Min/Max(Y, ~X) -> ~Min/Max(X, ~Y) - X
