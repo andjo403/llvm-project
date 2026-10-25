@@ -481,6 +481,15 @@ Value *InstCombinerImpl::SimplifyDemandedUseBits(Instruction *I,
     Known = LHSKnown.intersectWith(RHSKnown);
     break;
   }
+  case Instruction::PHI: {
+    bool Changed = false;
+    for (unsigned OpNo = 0; OpNo < I->getNumOperands(); OpNo++)
+      Changed |= ShrinkDemandedConstant(I, OpNo, DemandedMask);
+    if (Changed)
+      return I;
+    llvm::computeKnownBits(I, Known, Q, Depth);
+    break;
+  }
   case Instruction::Trunc: {
     // If we do not demand the high bits of a right-shifted and truncated value,
     // then we may be able to truncate it before the shift.

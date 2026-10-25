@@ -512,7 +512,7 @@ define i8 @smax_phi_self_loop(i1 %c, i8 %x) {
 ; CHECK-NEXT:  [[ENTRY:.*]]:
 ; CHECK-NEXT:    br label %[[LOOP:.*]]
 ; CHECK:       [[LOOP]]:
-; CHECK-NEXT:    [[ACC:%.*]] = phi i32 [ -128, %[[ENTRY]] ], [ [[M:%.*]], %[[LOOP]] ]
+; CHECK-NEXT:    [[ACC:%.*]] = phi i32 [ 0, %[[ENTRY]] ], [ [[M:%.*]], %[[LOOP]] ]
 ; CHECK-NEXT:    [[A:%.*]] = and i32 [[ACC]], 127
 ; CHECK-NEXT:    [[EXT:%.*]] = sext i8 [[X]] to i32
 ; CHECK-NEXT:    [[M]] = call i32 @llvm.smax.i32(i32 [[A]], i32 [[EXT]])
