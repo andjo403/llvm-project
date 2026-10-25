@@ -1390,6 +1390,23 @@ Instruction *InstCombinerImpl::visitTrunc(TruncInst &Trunc) {
           return Res;
       }
 
+  if (auto *Phi = dyn_cast<PHINode>(Src))
+    if (DestWidth == 1 && all_of(Phi->operands(), IsaPred<Constant>)) {
+      SmallVector<Constant *> Ops;
+      for (Value *V : Phi->incoming_values()) {
+        Constant *Res = ConstantFoldCastOperand(Instruction::Trunc,
+                                                cast<Constant>(V), DestTy, DL);
+        if (!Res)
+          return Changed ? &Trunc : nullptr;
+        Ops.push_back(Res);
+      }
+      Builder.SetInsertPoint(Phi);
+      PHINode *NewPhi = Builder.CreatePHI(DestTy, Phi->getNumOperands());
+      for (auto [V, Pred] : zip(Ops, Phi->blocks()))
+        NewPhi->addIncoming(V, Pred);
+      return replaceInstUsesWith(Trunc, NewPhi);
+    }
+
   return Changed ? &Trunc : nullptr;
 }
 
