@@ -1391,7 +1391,8 @@ Instruction *InstCombinerImpl::visitTrunc(TruncInst &Trunc) {
       }
 
   if (auto *Phi = dyn_cast<PHINode>(Src))
-    if (DestWidth == 1 && all_of(Phi->operands(), IsaPred<Constant>)) {
+    if (DestWidth == 1 && Trunc.hasNoUnsignedWrap() &&
+        all_of(Phi->operands(), IsaPred<Constant>)) {
       SmallVector<Constant *> Ops;
       for (Value *V : Phi->incoming_values()) {
         Constant *Res = ConstantFoldCastOperand(Instruction::Trunc,
