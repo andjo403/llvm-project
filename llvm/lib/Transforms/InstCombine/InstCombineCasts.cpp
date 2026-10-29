@@ -1391,8 +1391,7 @@ Instruction *InstCombinerImpl::visitTrunc(TruncInst &Trunc) {
       }
 
   if (auto *Phi = dyn_cast<PHINode>(Src))
-    if (DestWidth == 1 && Phi->hasOneUse() &&
-        all_of(Phi->operands(), IsaPred<Constant>)) {
+    if (DestWidth == 1 && all_of(Phi->operands(), IsaPred<Constant>)) {
       SmallVector<Constant *> Ops;
       for (Value *V : Phi->incoming_values()) {
         Constant *Res = ConstantFoldCastOperand(Instruction::Trunc,
@@ -1401,6 +1400,7 @@ Instruction *InstCombinerImpl::visitTrunc(TruncInst &Trunc) {
           return Changed ? &Trunc : nullptr;
         Ops.push_back(Res);
       }
+      Worklist.pushUsersToWorkList(*Phi);
       Builder.SetInsertPoint(Phi);
       PHINode *NewPhi = Builder.CreatePHI(DestTy, Phi->getNumOperands());
       for (auto [V, Pred] : zip(Ops, Phi->blocks()))
