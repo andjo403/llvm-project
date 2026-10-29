@@ -1391,7 +1391,7 @@ Instruction *InstCombinerImpl::visitTrunc(TruncInst &Trunc) {
       }
 
   if (auto *Phi = dyn_cast<PHINode>(Src))
-    if (DestWidth == 1 && Trunc.hasNoUnsignedWrap() &&
+    if (DestWidth == 1 && Phi->hasOneUse() &&
         all_of(Phi->operands(), IsaPred<Constant>)) {
       SmallVector<Constant *> Ops;
       for (Value *V : Phi->incoming_values()) {
