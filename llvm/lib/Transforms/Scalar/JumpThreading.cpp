@@ -540,6 +540,7 @@ bool JumpThreadingPass::computeValueKnownInPredecessorsImpl(
     Value *V, BasicBlock *BB, PredValueInfo &Result,
     ConstantPreference Preference, SmallPtrSet<Value *, 4> &RecursionSet,
     Instruction *CtxI) {
+  using namespace PatternMatch;
   const DataLayout &DL = BB->getDataLayout();
 
   // This method walks up use-def chains recursively.  Because of this, we could
@@ -565,7 +566,6 @@ bool JumpThreadingPass::computeValueKnownInPredecessorsImpl(
     // Okay, if this is a live-in value, see if it has a known value at the any
     // edge from our predecessors.
     for (BasicBlock *P : predecessors(BB)) {
-      using namespace PatternMatch;
       // If the value is known by LazyValueInfo to be a constant in a
       // predecessor, use that information to try to thread this block.
       Constant *PredCst = LVI->getConstantOnEdge(V, P, BB, CtxI);
@@ -576,7 +576,7 @@ bool JumpThreadingPass::computeValueKnownInPredecessorsImpl(
       CmpPredicate Pred;
       Value *Val;
       Constant *Cst;
-      if (!PredCst && match(V, m_Cmp(Pred, m_Value(Val), m_Constant(Cst))))
+      if (!PredCst && match(V, m_CmpLike(Pred, m_Value(Val), m_Constant(Cst))))
         PredCst = LVI->getPredicateOnEdge(Pred, Val, Cst, P, BB, CtxI);
       if (Constant *KC = getKnownConstant(PredCst, Preference))
         Result.emplace_back(KC, P);
@@ -603,24 +603,6 @@ bool JumpThreadingPass::computeValueKnownInPredecessorsImpl(
     return !Result.empty();
   }
 
-  // Handle Cast instructions.
-  if (CastInst *CI = dyn_cast<CastInst>(I)) {
-    Value *Source = CI->getOperand(0);
-    PredValueInfoTy Vals;
-    computeValueKnownInPredecessorsImpl(Source, BB, Vals, Preference,
-                                        RecursionSet, CtxI);
-    if (Vals.empty())
-      return false;
-
-    // Convert the known values.
-    for (auto &Val : Vals)
-      if (Constant *Folded = ConstantFoldCastOperand(CI->getOpcode(), Val.first,
-                                                     CI->getType(), DL))
-        Result.emplace_back(Folded, Val.second);
-
-    return !Result.empty();
-  }
-
   if (FreezeInst *FI = dyn_cast<FreezeInst>(I)) {
     Value *Source = FI->getOperand(0);
     computeValueKnownInPredecessorsImpl(Source, BB, Result, Preference,
@@ -635,7 +617,6 @@ bool JumpThreadingPass::computeValueKnownInPredecessorsImpl(
 
   // Handle some boolean conditions.
   if (I->getType()->getPrimitiveSizeInBits() == 1) {
-    using namespace PatternMatch;
     if (Preference != WantInteger)
       return false;
     // X | true -> true
@@ -719,13 +700,12 @@ bool JumpThreadingPass::computeValueKnownInPredecessorsImpl(
   }
 
   // Handle compare with phi operand, where the PHI is defined in this block.
-  if (CmpInst *Cmp = dyn_cast<CmpInst>(I)) {
+  Value *CmpLHS, *CmpRHS;
+  CmpPredicate Pred;
+  if (match(I, m_CmpLike(Pred, m_Value(CmpLHS), m_Value(CmpRHS)))) {
     if (Preference != WantInteger)
       return false;
-    Type *CmpType = Cmp->getType();
-    Value *CmpLHS = Cmp->getOperand(0);
-    Value *CmpRHS = Cmp->getOperand(1);
-    CmpInst::Predicate Pred = Cmp->getPredicate();
+    Type *CmpType = I->getType();
 
     PHINode *PN = dyn_cast<PHINode>(CmpLHS);
     if (!PN)
@@ -758,7 +738,7 @@ bool JumpThreadingPass::computeValueKnownInPredecessorsImpl(
             continue;
 
           Res = LVI->getPredicateOnEdge(Pred, LHS, cast<Constant>(RHS), PredBB,
-                                        BB, CtxI ? CtxI : Cmp);
+                                        BB, CtxI ? CtxI : I);
         }
 
         if (Constant *KC = getKnownConstant(Res, WantInteger))
@@ -779,7 +759,7 @@ bool JumpThreadingPass::computeValueKnownInPredecessorsImpl(
           // If the value is known by LazyValueInfo to be a constant in a
           // predecessor, use that information to try to thread this block.
           Constant *Res = LVI->getPredicateOnEdge(Pred, CmpLHS, CmpConst, P, BB,
-                                                  CtxI ? CtxI : Cmp);
+                                                  CtxI ? CtxI : I);
           if (Constant *KC = getKnownConstant(Res, WantInteger))
             Result.emplace_back(KC, P);
         }
@@ -791,8 +771,6 @@ bool JumpThreadingPass::computeValueKnownInPredecessorsImpl(
       // (icmp (add (x, C1)), C2). See if we have we have such a thing with
       // x as a live-in.
       {
-        using namespace PatternMatch;
-
         Value *AddLHS;
         ConstantInt *AddConst;
         if (isa<ConstantInt>(CmpConst) &&
@@ -844,6 +822,24 @@ bool JumpThreadingPass::computeValueKnownInPredecessorsImpl(
 
       return !Result.empty();
     }
+  }
+
+  // Handle Cast instructions.
+  if (CastInst *CI = dyn_cast<CastInst>(I)) {
+    Value *Source = CI->getOperand(0);
+    PredValueInfoTy Vals;
+    computeValueKnownInPredecessorsImpl(Source, BB, Vals, Preference,
+                                        RecursionSet, CtxI);
+    if (Vals.empty())
+      return false;
+
+    // Convert the known values.
+    for (auto &Val : Vals)
+      if (Constant *Folded = ConstantFoldCastOperand(CI->getOpcode(), Val.first,
+                                                     CI->getType(), DL))
+        Result.emplace_back(Folded, Val.second);
+
+    return !Result.empty();
   }
 
   if (SelectInst *SI = dyn_cast<SelectInst>(I)) {
@@ -1044,32 +1040,35 @@ bool JumpThreadingPass::processBlock(BasicBlock *BB) {
   if (auto *FI = dyn_cast<FreezeInst>(CondInst))
     CondWithoutFreeze = FI->getOperand(0);
 
-  if (CmpInst *CondCmp = dyn_cast<CmpInst>(CondWithoutFreeze)) {
-    // If we're branching on a conditional, LVI might be able to determine
-    // it's value at the branch instruction.  We only handle comparisons
-    // against a constant at this time.
-    if (Constant *CondConst = dyn_cast<Constant>(CondCmp->getOperand(1))) {
-      Constant *Res =
-          LVI->getPredicateAt(CondCmp->getPredicate(), CondCmp->getOperand(0),
-                              CondConst, BB->getTerminator(),
-                              /*UseBlockValue=*/false);
-      if (Res) {
-        // We can safely replace *some* uses of the CondInst if it has
-        // exactly one value as returned by LVI. RAUW is incorrect in the
-        // presence of guards and assumes, that have the `Cond` as the use. This
-        // is because we use the guards/assume to reason about the `Cond` value
-        // at the end of block, but RAUW unconditionally replaces all uses
-        // including the guards/assumes themselves and the uses before the
-        // guard/assume.
-        if (replaceFoldableUses(CondCmp, Res, BB))
-          return true;
-      }
-
-      // We did not manage to simplify this branch, try to see whether
-      // CondCmp depends on a known phi-select pattern.
-      if (tryToUnfoldSelect(CondCmp, BB))
+  Value *CmpLHS;
+  Constant *CondConst;
+  CmpPredicate Pred;
+  using namespace PatternMatch;
+  // If we're branching on a conditional, LVI might be able to determine
+  // it's value at the branch instruction.  We only handle comparisons
+  // against a constant at this time.
+  if (match(CondWithoutFreeze,
+            m_CmpLike(Pred, m_Value(CmpLHS), m_Constant(CondConst)))) {
+    Constant *Res =
+        LVI->getPredicateAt(Pred, CmpLHS, CondConst, BB->getTerminator(),
+                            /*UseBlockValue=*/false);
+    if (Res) {
+      // We can safely replace *some* uses of the CondInst if it has
+      // exactly one value as returned by LVI. RAUW is incorrect in the
+      // presence of guards and assumes, that have the `Cond` as the use. This
+      // is because we use the guards/assume to reason about the `Cond` value
+      // at the end of block, but RAUW unconditionally replaces all uses
+      // including the guards/assumes themselves and the uses before the
+      // guard/assume.
+      if (replaceFoldableUses(cast<Instruction>(CondWithoutFreeze), Res, BB))
         return true;
     }
+
+    // We did not manage to simplify this branch, try to see whether
+    // CondCmp depends on a known phi-select pattern.
+    if (tryToUnfoldSelect(Pred, CmpLHS, CondConst, BB,
+                          cast<Instruction>(CondWithoutFreeze)))
+      return true;
   }
 
   if (SwitchInst *SI = dyn_cast<SwitchInst>(BB->getTerminator()))
@@ -1082,9 +1081,8 @@ bool JumpThreadingPass::processBlock(BasicBlock *BB) {
   // which can then be used to thread the values.
   Value *SimplifyValue = CondWithoutFreeze;
 
-  if (CmpInst *CondCmp = dyn_cast<CmpInst>(SimplifyValue))
-    if (isa<Constant>(CondCmp->getOperand(1)))
-      SimplifyValue = CondCmp->getOperand(0);
+  if (match(CondWithoutFreeze, m_CmpLike(Pred, m_Value(CmpLHS), m_Constant())))
+    SimplifyValue = CmpLHS;
 
   // TODO: There are other places where load PRE would be profitable, such as
   // more complex comparisons.
@@ -1534,15 +1532,17 @@ Constant *JumpThreadingPass::evaluateOnPredecessorEdge(
   // and may be removed, which can lead to self-referencing instructions in
   // code that becomes unreachable. Consequently, we need to handle those
   // instructions in unreachable code and check before going into recursion.
-  if (CmpInst *CondCmp = dyn_cast<CmpInst>(V)) {
-    if (CondCmp->getParent() == BB) {
-      Constant *Op0 = evaluateOnPredecessorEdge(
-          BB, PredPredBB, CondCmp->getOperand(0), DL, Visited);
-      Constant *Op1 = evaluateOnPredecessorEdge(
-          BB, PredPredBB, CondCmp->getOperand(1), DL, Visited);
+  Value *CmpLHS, *CmpRHS;
+  CmpPredicate Pred;
+  using namespace PatternMatch;
+  if (match(V, m_CmpLike(Pred, m_Value(CmpLHS), m_Value(CmpRHS)))) {
+    if (cast<Instruction>(V)->getParent() == BB) {
+      Constant *Op0 =
+          evaluateOnPredecessorEdge(BB, PredPredBB, CmpLHS, DL, Visited);
+      Constant *Op1 =
+          evaluateOnPredecessorEdge(BB, PredPredBB, CmpRHS, DL, Visited);
       if (Op0 && Op1) {
-        return ConstantFoldCompareInstOperands(CondCmp->getPredicate(), Op0,
-                                               Op1, DL);
+        return ConstantFoldCompareInstOperands(Pred, Op0, Op1, DL);
       }
     }
     return nullptr;
@@ -2903,10 +2903,11 @@ bool JumpThreadingPass::tryToUnfoldSelect(SwitchInst *SI, BasicBlock *BB) {
 ///
 /// And expand the select into a branch structure if one of its arms allows %c
 /// to be folded. This later enables threading from bb1 over bb2.
-bool JumpThreadingPass::tryToUnfoldSelect(CmpInst *CondCmp, BasicBlock *BB) {
+bool JumpThreadingPass::tryToUnfoldSelect(CmpInst::Predicate CondPred,
+                                          Value *LHS, Constant *CondRHS,
+                                          BasicBlock *BB, Instruction *CtxI) {
   CondBrInst *CondBr = dyn_cast<CondBrInst>(BB->getTerminator());
-  PHINode *CondLHS = dyn_cast<PHINode>(CondCmp->getOperand(0));
-  Constant *CondRHS = cast<Constant>(CondCmp->getOperand(1));
+  PHINode *CondLHS = dyn_cast<PHINode>(LHS);
 
   if (!CondBr || !CondLHS || CondLHS->getParent() != BB)
     return false;
@@ -2927,12 +2928,10 @@ bool JumpThreadingPass::tryToUnfoldSelect(CmpInst *CondCmp, BasicBlock *BB) {
     // Now check if one of the select values would allow us to constant fold the
     // terminator in BB. We don't do the transform if both sides fold, those
     // cases will be threaded in any case.
-    Constant *LHSRes =
-        LVI->getPredicateOnEdge(CondCmp->getPredicate(), SI->getOperand(1),
-                                CondRHS, Pred, BB, CondCmp);
-    Constant *RHSRes =
-        LVI->getPredicateOnEdge(CondCmp->getPredicate(), SI->getOperand(2),
-                                CondRHS, Pred, BB, CondCmp);
+    Constant *LHSRes = LVI->getPredicateOnEdge(CondPred, SI->getOperand(1),
+                                               CondRHS, Pred, BB, CtxI);
+    Constant *RHSRes = LVI->getPredicateOnEdge(CondPred, SI->getOperand(2),
+                                               CondRHS, Pred, BB, CtxI);
     if ((LHSRes || RHSRes) && LHSRes != RHSRes) {
       unfoldSelectInstr(Pred, BB, SI, CondLHS, I);
       return true;
@@ -2979,9 +2978,8 @@ bool JumpThreadingPass::tryToUnfoldSelectInCurrBB(BasicBlock *BB) {
                      [](Value *V) { return !isa<ConstantInt>(V); }))
       continue;
 
+    using namespace PatternMatch;
     auto isUnfoldCandidate = [BB](SelectInst *SI, Value *V) {
-      using namespace PatternMatch;
-
       // Check if SI is in BB and use V as condition.
       if (SI->getParent() != BB)
         return false;
@@ -2992,13 +2990,19 @@ bool JumpThreadingPass::tryToUnfoldSelectInCurrBB(BasicBlock *BB) {
 
     SelectInst *SI = nullptr;
     for (Use &U : PN->uses()) {
-      if (ICmpInst *Cmp = dyn_cast<ICmpInst>(U.getUser())) {
+      Value *CmpLHS;
+      CmpPredicate Pred;
+      // If we're branching on a conditional, LVI might be able to determine
+      // it's value at the branch instruction.  We only handle comparisons
+      // against a constant at this time.
+      auto *I = dyn_cast<Instruction>(U.getUser());
+      if (match(I,
+                m_OneUse(m_CmpLike(Pred, m_Value(CmpLHS), m_ConstantInt())))) {
         // Look for a ICmp in BB that compares PN with a constant and is the
         // condition of a Select.
-        if (Cmp->getParent() == BB && Cmp->hasOneUse() &&
-            isa<ConstantInt>(Cmp->getOperand(1 - U.getOperandNo())))
-          if (SelectInst *SelectI = dyn_cast<SelectInst>(Cmp->user_back()))
-            if (isUnfoldCandidate(SelectI, Cmp->use_begin()->get())) {
+        if (cast<Instruction>(U.getUser())->getParent() == BB)
+          if (SelectInst *SelectI = dyn_cast<SelectInst>(I->user_back()))
+            if (isUnfoldCandidate(SelectI, I->use_begin()->get())) {
               SI = SelectI;
               break;
             }

@@ -21,6 +21,7 @@
 #include "llvm/Analysis/BlockFrequencyInfo.h"
 #include "llvm/Analysis/BranchProbabilityInfo.h"
 #include "llvm/Analysis/DomTreeUpdater.h"
+#include "llvm/IR/InstrTypes.h"
 #include "llvm/IR/ValueHandle.h"
 #include "llvm/Support/Compiler.h"
 #include "llvm/Transforms/Utils/ValueMapper.h"
@@ -169,7 +170,9 @@ public:
   LLVM_ABI void unfoldSelectInstr(BasicBlock *Pred, BasicBlock *BB,
                                   SelectInst *SI, PHINode *SIUse, unsigned Idx);
 
-  LLVM_ABI bool tryToUnfoldSelect(CmpInst *CondCmp, BasicBlock *BB);
+  LLVM_ABI bool tryToUnfoldSelect(CmpInst::Predicate CondPred, Value *LHS,
+                                  Constant *CondRHS, BasicBlock *BB,
+                                  Instruction *CtxI);
   LLVM_ABI bool tryToUnfoldSelect(SwitchInst *SI, BasicBlock *BB);
   LLVM_ABI bool tryToUnfoldSelectInCurrBB(BasicBlock *BB);
 
