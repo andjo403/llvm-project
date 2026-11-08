@@ -16117,6 +16117,19 @@ void ScalarEvolution::LoopGuards::collectFromBlock(
         continue;
       }
 
+      if (auto *Trunc = dyn_cast<TruncInst>(Cond)) {
+        auto Predicate = EnterIfTrue ? CmpInst::ICMP_NE : CmpInst::ICMP_EQ;
+        auto *Op = Trunc->getOperand(0);
+        Type *Ty = Op->getType();
+        const SCEV *LHS = Trunc->hasNoUnsignedWrap()
+                              ? SE.getSCEV(Op)
+                              : SE.getZeroExtendExpr(SE.getSCEV(Trunc), Ty);
+
+        const auto *RHS = SE.getConstant(Ty, 0);
+        GuardsToProcess.emplace_back(Predicate, LHS, RHS);
+        continue;
+      }
+
       Value *L, *R;
       if (EnterIfTrue ? match(Cond, m_LogicalAnd(m_Value(L), m_Value(R)))
                       : match(Cond, m_LogicalOr(m_Value(L), m_Value(R)))) {
