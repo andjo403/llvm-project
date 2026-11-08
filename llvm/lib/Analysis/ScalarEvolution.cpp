@@ -9151,6 +9151,16 @@ ScalarEvolution::ExitLimit ScalarEvolution::computeExitLimitFromCondImpl(
                                     /*AllowPredicates=*/true);
   }
 
+  if (auto *Trunc = dyn_cast<TruncInst>(ExitCond)) {
+    Type *Ty = Trunc->getOperand(0)->getType();
+    auto *LHS = getZeroExtendExpr(getSCEV(Trunc), Ty);
+    auto EL =
+        computeExitLimitFromICmp(L, CmpInst::ICMP_NE, LHS, getConstant(Ty, 0),
+                                 ControlsOnlyExit, AllowPredicates);
+    if (EL.hasAnyInfo())
+      return EL;
+  }
+
   // Check for a constant condition. These are normally stripped out by
   // SimplifyCFG, but ScalarEvolution may be used by a pass which wishes to
   // preserve the CFG and is temporarily leaving constant conditions
